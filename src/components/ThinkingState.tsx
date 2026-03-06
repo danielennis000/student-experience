@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Typography, Space } from 'antd'
-import { LoadingOutlined } from '@ant-design/icons'
-
-const { Text } = Typography
+import { Mirage } from 'ldrs/react'
+import 'ldrs/react/Mirage.css'
 
 interface ThinkingStateProps {
   steps: string[]
@@ -25,17 +23,10 @@ export default function ThinkingState({ steps, onComplete }: ThinkingStateProps)
   }, [currentStep, steps.length, stableComplete])
 
   return (
-    <div style={{ padding: '16px 0' }}>
-      <div className="shimmer-container">
-        <div className="shimmer-bar" style={{ width: '80%' }} />
-        <div className="shimmer-bar" style={{ width: '60%', animationDelay: '0.2s' }} />
-        <div className="shimmer-bar" style={{ width: '40%', animationDelay: '0.4s' }} />
-      </div>
-      <div className="thinking-text" key={currentStep}>
-        <Space>
-          <LoadingOutlined style={{ color: '#8C1D40' }} />
-          <Text type="secondary">{steps[currentStep]}</Text>
-        </Space>
+    <div className="thinking-text" key={currentStep}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Mirage size="50" speed="2.5" color="#8C1D40" />
+        <span className="mirage-status-text">{steps[currentStep]}</span>
       </div>
     </div>
   )

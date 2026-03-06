@@ -14,39 +14,156 @@ body {
   height: 100vh;
 }
 
-/* ===== Mirage / Shimmer Animation ===== */
-@keyframes shimmer {
+/* =============================================
+   MIRAGE ANIMATION
+   Named gradient: #16222A → #3A6073 (deep navy/teal)
+   with ASU maroon accent sweep
+   ============================================= */
+
+@keyframes mirageSweep {
   0% {
-    background-position: -200% 0;
+    background-position: -300% 0;
   }
   100% {
-    background-position: 200% 0;
+    background-position: 300% 0;
   }
 }
 
-.shimmer-container {
-  margin-bottom: 12px;
+@keyframes mirageGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(22, 34, 42, 0.06), 0 0 4px rgba(58, 96, 115, 0.04);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(22, 34, 42, 0.1), 0 0 8px rgba(140, 29, 64, 0.06);
+  }
 }
 
-.shimmer-bar {
-  height: 12px;
-  border-radius: 6px;
+@keyframes mirageTextShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes miragePulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes mirageOrb {
+  0% {
+    box-shadow: 0 0 4px rgba(140, 29, 64, 0.3), 0 0 8px rgba(58, 96, 115, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(140, 29, 64, 0.5), 0 0 16px rgba(58, 96, 115, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(140, 29, 64, 0.3), 0 0 8px rgba(58, 96, 115, 0.2);
+  }
+}
+
+.mirage-container {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7f9 100%);
+  border: 1px solid #eef1f3;
+  animation: mirageGlow 3s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.mirage-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(
     90deg,
-    #f3f3f3 25%,
-    #e0e0e0 50%,
-    #f3f3f3 75%
+    transparent 0%,
+    rgba(58, 96, 115, 0.03) 25%,
+    rgba(22, 34, 42, 0.05) 50%,
+    rgba(58, 96, 115, 0.03) 75%,
+    transparent 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: mirageSweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.mirage-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    #e4e8eb 0%,
+    #d0d5d9 10%,
+    #a8b5be 20%,
+    #3A6073 35%,
+    #16222A 50%,
+    #3A6073 65%,
+    #a8b5be 80%,
+    #d0d5d9 90%,
+    #e4e8eb 100%
+  );
+  background-size: 300% 100%;
+  animation: mirageSweep 2.2s ease-in-out infinite;
   margin-bottom: 8px;
+  opacity: 0.45;
+}
+
+.mirage-bar:nth-child(2) {
+  animation-delay: 0.15s;
+  opacity: 0.35;
+}
+
+.mirage-bar:nth-child(3) {
+  animation-delay: 0.3s;
+  opacity: 0.25;
+}
+
+.mirage-orb {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8C1D40, #3A6073);
+  animation: mirageOrb 2s ease-in-out infinite, miragePulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.mirage-status-text {
+  font-size: 14px;
+  font-weight: 500;
+  background: linear-gradient(
+    90deg,
+    #484848 0%,
+    #484848 30%,
+    #8C1D40 50%,
+    #3A6073 60%,
+    #484848 70%,
+    #484848 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: mirageTextShimmer 3s ease-in-out infinite;
 }
 
 /* ===== Thinking Text Fade-In ===== */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -55,7 +172,7 @@ body {
 }
 
 .thinking-text {
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.35s ease-out;
 }
 
 /* ===== Message Entrance Animation ===== */
@@ -88,6 +205,72 @@ body {
   animation: fadeIn 0.6s ease-out;
 }
 
+/* ===== Source Citation Pills ===== */
+.source-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  border: 1px solid #e8e8e8;
+  font-size: 12px;
+  color: #484848;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.source-pill:hover {
+  background: #eee;
+  border-color: #d0d0d0;
+  color: #8C1D40;
+}
+
+.source-pill .source-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8C1D40;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ===== Sidebar Drawer ===== */
+.sidebar-project-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sidebar-project-item:hover {
+  background: #f5f5f5;
+}
+
+.sidebar-project-item.active {
+  background: #fdf0f4;
+}
+
+.sidebar-history-item {
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sidebar-history-item:hover {
+  background: #f5f5f5;
+}
+
 /* ===== Custom Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -111,24 +294,12 @@ body {
   box-shadow: none !important;
 }
 
-/* Ensure sidebar doesn't collapse on small screens */
 .ant-layout-sider {
   min-height: 100vh;
 }
 
-/* Pulsing dot animation for loading indicator */
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-}
-
-.pulse-dot {
-  animation: pulse 1.4s ease-in-out infinite;
+.ant-drawer-body {
+  padding: 0 !important;
 }
 
 /* Success checkmark animation */
