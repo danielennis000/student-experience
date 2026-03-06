@@ -51,7 +51,14 @@ type Phase =
 let messageId = 0
 const nextId = () => `msg-${++messageId}`
 
-export default function ChatLayout() {
+interface ChatLayoutProps {
+  darkMode?: boolean
+  onDarkModeChange?: (value: boolean) => void
+  avatar?: string
+  onAvatarChange?: (value: string) => void
+}
+
+export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar = 'liv', onAvatarChange }: ChatLayoutProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [phase, setPhase] = useState<Phase>('welcome')
   const [inputValue, setInputValue] = useState('')
@@ -198,25 +205,47 @@ export default function ChatLayout() {
   const showWelcome = phase === 'welcome' && messages.length === 0
   const projectInfo = projectDescriptions[activeProject] || projectDescriptions['CreateAI Chat']
 
+  const detectThemeIntent = (text: string): 'dark' | 'light' | null => {
+    const t = text.trim().toLowerCase()
+    const darkPhrases = /change to dark mode|switch to dark mode|enable dark mode|turn on dark mode|use dark mode|go dark|dark mode please|set dark mode/i
+    const lightPhrases = /change to light mode|change the ui back to light mode|switch to light mode|enable light mode|turn on light mode|use light mode|go light|light mode please|set light mode|disable dark mode|turn off dark mode|back to light/i
+    if (darkPhrases.test(t)) return 'dark'
+    if (lightPhrases.test(t)) return 'light'
+    return null
+  }
+
   const onSubmit = () => {
-    if (phase === 'welcome') handleSubmit()
-    else if (phase === 'results' && inputValue.trim()) {
+    if (phase === 'welcome') {
+      const themeIntent = detectThemeIntent(inputValue)
+      if (themeIntent !== null) {
+        onDarkModeChange?.(themeIntent === 'dark')
+        setInputValue('')
+        addMessage({ id: nextId(), role: 'user', text: inputValue.trim() })
+        addMessage({
+          id: nextId(),
+          role: 'assistant',
+          text: themeIntent === 'dark' ? 'Switched to dark mode.' : 'Switched to light mode.',
+        })
+        return
+      }
+      handleSubmit()
+    } else if (phase === 'results' && inputValue.trim()) {
       setInputValue('')
       handleDraftEmail()
     }
   }
 
   return (
-    <Layout style={{ height: '100vh', background: '#fff' }}>
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <AvatarModeModal open={avatarModeOpen} onClose={() => setAvatarModeOpen(false)} />
+    <Layout style={{ height: '100vh', background: darkMode ? '#141414' : '#fff' }}>
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} darkMode={darkMode} onDarkModeChange={onDarkModeChange} avatar={avatar} onAvatarChange={onAvatarChange} />
+      <AvatarModeModal open={avatarModeOpen} onClose={() => setAvatarModeOpen(false)} selectedAvatar={avatar} />
 
       {/* ===== Sidebar ===== */}
       <Sider
         width={sidebarExpanded ? 200 : 65}
         style={{
-          background: '#fff',
-          borderRight: '1px solid #fafafa',
+          background: darkMode ? '#1f1f1f' : '#fff',
+          borderRight: darkMode ? '1px solid #303030' : '1px solid #fafafa',
           transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
           position: 'relative',
@@ -259,7 +288,7 @@ export default function ChatLayout() {
             >
               {/* AI Projects */}
               <div style={{ padding: '0 14px', marginBottom: 4 }}>
-                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer' }}>
+                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined }}>
                   CreateAI Projects <DownOutlined style={{ fontSize: 9 }} />
                 </Text>
               </div>
@@ -277,14 +306,14 @@ export default function ChatLayout() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
-                    background: activeProject === p.name && !activeProjectId ? '#f5f5f5' : undefined,
+                    background: activeProject === p.name && !activeProjectId ? (darkMode ? '#303030' : '#f5f5f5') : undefined,
                     borderRadius: 6,
                     marginBottom: 2,
                   }}
                   className="sidebar-history-item"
                 >
                   <img src={ASSETS.asuThumb} alt="" style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 4, objectFit: 'cover' }} />
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: darkMode ? 'rgba(255,255,255,0.85)' : undefined }}>{p.name}</span>
                   {activeProject === p.name && !activeProjectId && (
                     <img src={ASSETS.editIcon} alt="" style={{ width: 14, height: 14, flexShrink: 0, opacity: 0.7 }} />
                   )}
@@ -292,13 +321,13 @@ export default function ChatLayout() {
               ))}
               <div style={{ padding: '4px 14px 4px 20px' }}>
                 <Tooltip title="More AI projects coming soon">
-                  <a style={{ fontSize: 13, color: '#8C1D40' }}>View all</a>
+                  <a style={{ fontSize: 13, color: darkMode ? '#FFC627' : '#8C1D40' }}>View all</a>
                 </Tooltip>
               </div>
 
               {/* Chats */}
               <div style={{ padding: '16px 14px 4px', marginBottom: 4 }}>
-                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer' }}>
+                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined }}>
                   Chats <DownOutlined style={{ fontSize: 9 }} />
                 </Text>
               </div>
@@ -316,9 +345,10 @@ export default function ChatLayout() {
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    background: activeProjectId === c.id ? '#f5f5f5' : undefined,
+                    background: activeProjectId === c.id ? (darkMode ? '#303030' : '#f5f5f5') : undefined,
                     borderRadius: 6,
                     marginBottom: 2,
+                    color: darkMode ? 'rgba(255,255,255,0.85)' : undefined,
                   }}
                   className="sidebar-history-item"
                 >
@@ -338,7 +368,7 @@ export default function ChatLayout() {
           >
             <Avatar size={28} src={ASSETS.userAvatar} style={{ flexShrink: 0 }} />
             {sidebarExpanded && (
-              <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{mockProfile.email}</Text>
+              <Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined }}>{mockProfile.email}</Text>
             )}
           </div>
           {profileOpen && (
@@ -346,22 +376,23 @@ export default function ChatLayout() {
               triggerRef={profileTriggerRef}
               onSettings={() => setSettingsOpen(true)}
               onClose={() => setProfileOpen(false)}
+              darkMode={darkMode}
             />
           )}
         </div>
       </Sider>
 
-      <Layout style={{ background: '#fff' }}>
+      <Layout style={{ background: darkMode ? '#141414' : '#fff' }}>
         {/* ===== Header ===== */}
         <Header
           style={{
-            background: '#fff',
+            background: darkMode ? '#141414' : '#fff',
             padding: '0 20px',
             height: 56,
             lineHeight: '56px',
             display: 'flex',
             alignItems: 'center',
-            borderBottom: 'none',
+            borderBottom: darkMode ? '1px solid #303030' : 'none',
           }}
         >
           <img src={ASSETS.asuLogo} alt="ASU" style={{ height: 28, marginRight: 10 }} />
@@ -394,10 +425,10 @@ export default function ChatLayout() {
                 marginTop: 12,
                 marginBottom: 0,
                 padding: '10px 16px',
-                background: '#fff',
-                border: '1px solid #e8e8e8',
+                background: darkMode ? '#1f1f1f' : '#fff',
+                border: darkMode ? '1px solid #303030' : '1px solid #e8e8e8',
                 borderRadius: 8,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.06)',
                 alignSelf: 'flex-start',
               }}
             >
@@ -423,7 +454,7 @@ export default function ChatLayout() {
               >
                 {projectInfo.title}
               </Title>
-              <Text style={{ textAlign: 'center', color: '#484848', fontSize: 16, lineHeight: '24px' }}>
+              <Text style={{ textAlign: 'center', color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontSize: 16, lineHeight: '24px' }}>
                 {projectInfo.subtitle}
               </Text>
             </div>
@@ -436,20 +467,20 @@ export default function ChatLayout() {
                 {msg.role === 'user' && (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                     <div
-                      style={{ background: '#f3f3f3', padding: '10px 16px', borderRadius: 18, borderBottomRightRadius: 4, maxWidth: '75%' }}
+                      style={{ background: darkMode ? '#262626' : '#f3f3f3', padding: '10px 16px', borderRadius: 18, borderBottomRightRadius: 4, maxWidth: '75%' }}
                     >
                       <Text style={{ fontSize: 15 }}>{msg.text}</Text>
                     </div>
                     <div style={{ display: 'flex', gap: 4, marginTop: 8, flexShrink: 0 }}>
-                      <CopyOutlined style={{ fontSize: 13, color: '#d0d0d0', cursor: 'pointer' }} />
-                      <EditOutlined style={{ fontSize: 13, color: '#d0d0d0', cursor: 'pointer' }} />
+                      <CopyOutlined style={{ fontSize: 13, color: darkMode ? 'rgba(255,255,255,0.45)' : '#d0d0d0', cursor: 'pointer' }} />
+                      <EditOutlined style={{ fontSize: 13, color: darkMode ? 'rgba(255,255,255,0.45)' : '#d0d0d0', cursor: 'pointer' }} />
                     </div>
                   </div>
                 )}
 
                 {msg.role === 'thinking' && (
                   <div style={{ maxWidth: 600 }}>
-                    <ThinkingState steps={msg.thinkingSteps || []} onComplete={getThinkingHandler()} />
+                    <ThinkingState steps={msg.thinkingSteps || []} onComplete={getThinkingHandler()} darkMode={darkMode} />
                   </div>
                 )}
 
@@ -464,9 +495,9 @@ export default function ChatLayout() {
                         )}
                       </Paragraph>
                     )}
-                    {msg.component === 'events' && <EventList />}
-                    {msg.component === 'email' && <EmailDraft onSwitchToSlack={handleSwitchToSlack} />}
-                    {msg.component === 'slack' && <SlackComposer onSend={handleSendSlack} />}
+                    {msg.component === 'events' && <EventList darkMode={darkMode} />}
+                    {msg.component === 'email' && <EmailDraft onSwitchToSlack={handleSwitchToSlack} darkMode={darkMode} />}
+                    {msg.component === 'slack' && <SlackComposer onSend={handleSendSlack} darkMode={darkMode} />}
                     {msg.component === 'success' && (
                       <Result
                         icon={<CheckCircleFilled className="success-enter" style={{ color: '#52c41a', fontSize: 48 }} />}
@@ -475,7 +506,7 @@ export default function ChatLayout() {
                         style={{ padding: '24px 0' }}
                       />
                     )}
-                    <FeedbackRow />
+                    <FeedbackRow darkMode={darkMode} />
                   </div>
                 )}
               </div>
@@ -485,11 +516,11 @@ export default function ChatLayout() {
         </Content>
 
         {/* ===== Input Footer ===== */}
-        <div style={{ padding: '12px 24px 16px', background: '#fff' }}>
+        <div style={{ padding: '12px 24px 16px', background: darkMode ? '#141414' : '#fff' }}>
           <div style={{ maxWidth: 760, margin: '0 auto' }}>
             <div
               style={{
-                border: '1px solid #f3f3f3',
+                border: darkMode ? '1px solid #434343' : '1px solid #f3f3f3',
                 borderRadius: 24,
                 height: 50,
                 padding: '0 6px',
@@ -502,7 +533,7 @@ export default function ChatLayout() {
                 style={{
                   width: 34, height: 34, borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 28, color: '#484848', fontWeight: 300,
+                  flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 28, color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontWeight: 300,
                 }}
               >
                 +
@@ -521,10 +552,24 @@ export default function ChatLayout() {
                 tabIndex={0}
                 onClick={() => setAvatarModeOpen(true)}
                 onKeyDown={(e) => e.key === 'Enter' && setAvatarModeOpen(true)}
-                style={{ width: 14, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', margin: '0 6px' }}
+                style={{
+                  width: 14,
+                  height: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                  margin: '0 6px',
+                  ...(darkMode && { filter: 'brightness(0) invert(1)' }),
+                }}
                 title="Avatar mode (voice)"
               >
-                <img src={ASSETS.micIcon} alt="Voice" style={{ width: 14, height: 18, objectFit: 'contain', opacity: 0.6 }} />
+                <img
+                  src={ASSETS.micIcon}
+                  alt="Voice"
+                  style={{ width: 14, height: 18, objectFit: 'contain', opacity: darkMode ? 0.9 : 0.6 }}
+                />
               </div>
               <div
                 onClick={onSubmit}
@@ -540,7 +585,7 @@ export default function ChatLayout() {
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <Text type="secondary" style={{ fontSize: 14, lineHeight: '18px' }}>
                 By using this AI project, you acknowledge and agree to these{' '}
-                <a style={{ color: '#8C1D40', textDecoration: 'underline' }}>terms</a>.
+                <a style={{ color: darkMode ? '#FFC627' : '#8C1D40', textDecoration: 'underline' }}>terms</a>.
                 CreateAI may display incorrect or false information.
               </Text>
             </div>

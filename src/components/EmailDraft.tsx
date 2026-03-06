@@ -7,17 +7,21 @@ const { TextArea } = Input
 
 interface EmailDraftProps {
   onSwitchToSlack: () => void
+  darkMode?: boolean
 }
 
-export default function EmailDraft({ onSwitchToSlack }: EmailDraftProps) {
+export default function EmailDraft({ onSwitchToSlack, darkMode = false }: EmailDraftProps) {
   const [subject] = useState(mockEmailDraft.subject)
   const [body, setBody] = useState(mockEmailDraft.body)
+  const borderColor = darkMode ? '#434343' : '#e8e8e8'
+  const textColor = darkMode ? 'rgba(255,255,255,0.85)' : '#191919'
+  const mutedColor = darkMode ? 'rgba(255,255,255,0.65)' : '#484848'
 
   return (
     <div>
       <div
         style={{
-          border: '1px solid #e8e8e8',
+          border: `1px solid ${borderColor}`,
           borderRadius: 24,
           padding: '20px 24px',
           marginBottom: 16,
@@ -42,7 +46,7 @@ export default function EmailDraft({ onSwitchToSlack }: EmailDraftProps) {
               fontSize: 15,
               lineHeight: '24px',
               fontFamily: 'Arial, Helvetica, sans-serif',
-              color: '#191919',
+              color: textColor,
               resize: 'none',
               borderRadius: 0,
             }}
@@ -50,11 +54,11 @@ export default function EmailDraft({ onSwitchToSlack }: EmailDraftProps) {
         </div>
       </div>
 
-      <Paragraph style={{ fontSize: 15, lineHeight: '24px', color: '#484848' }}>
+      <Paragraph style={{ fontSize: 15, lineHeight: '24px', color: mutedColor }}>
         Feel free to make any changes directly to the draft. When you're ready, I can send it for you. Or you can {' '}
         <a
           onClick={onSwitchToSlack}
-          style={{ color: '#8C1D40', textDecoration: 'underline', cursor: 'pointer' }}
+          style={{ color: darkMode ? '#FFC627' : '#8C1D40', textDecoration: 'underline', cursor: 'pointer' }}
         >
           send it via Slack
         </a>

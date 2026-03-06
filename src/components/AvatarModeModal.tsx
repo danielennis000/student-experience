@@ -7,9 +7,11 @@ const WIDGET_PAGE = `${import.meta.env.BASE_URL}anam-widget.html`
 interface AvatarModeModalProps {
   open: boolean
   onClose: () => void
+  selectedAvatar?: string
 }
 
-export default function AvatarModeModal({ open, onClose }: AvatarModeModalProps) {
+export default function AvatarModeModal({ open, onClose, selectedAvatar = 'liv' }: AvatarModeModalProps) {
+  const iframeSrc = `${WIDGET_PAGE}${WIDGET_PAGE.includes('?') ? '&' : '?'}avatar=${encodeURIComponent(selectedAvatar)}`
   return (
     <Modal
       open={open}
@@ -23,7 +25,7 @@ export default function AvatarModeModal({ open, onClose }: AvatarModeModalProps)
     >
       <iframe
         title="Anam avatar widget"
-        src={WIDGET_PAGE}
+        src={iframeSrc}
         allow="microphone"
         style={{
           width: '100%',

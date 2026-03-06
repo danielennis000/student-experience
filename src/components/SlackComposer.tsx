@@ -8,15 +8,18 @@ const { TextArea } = Input
 
 interface SlackComposerProps {
   onSend: () => void
+  darkMode?: boolean
 }
 
-export default function SlackComposer({ onSend }: SlackComposerProps) {
+export default function SlackComposer({ onSend, darkMode = false }: SlackComposerProps) {
   const [channel, setChannel] = useState(mockSlackMessage.channel)
   const [message, setMessage] = useState(mockSlackMessage.message)
+  const borderColor = darkMode ? '#434343' : '#e8e8e8'
+  const textareaBg = darkMode ? '#262626' : '#fafafa'
 
   return (
     <Card
-      style={{ border: '1px solid #e8e8e8', marginTop: 16 }}
+      style={{ border: `1px solid ${borderColor}`, marginTop: 16 }}
       styles={{ body: { padding: 20 } }}
     >
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
@@ -67,8 +70,8 @@ export default function SlackComposer({ onSend }: SlackComposerProps) {
       <div
         className="slack-message-textarea"
         style={{
-          background: '#fafafa',
-          border: '1px solid #e8e8e8',
+          background: textareaBg,
+          border: `1px solid ${borderColor}`,
           padding: 16,
           marginBottom: 16,
         }}

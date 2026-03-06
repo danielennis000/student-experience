@@ -14,10 +14,17 @@ function renderDetail(detail: string) {
   })
 }
 
-function SourcePill({ domain }: { domain: string }) {
+function SourcePill({ domain, darkMode }: { domain: string; darkMode?: boolean }) {
   const [hover, setHover] = useState(false)
   const sourceMeta = mockSources.find((s) => s.name === domain)
   const href = sourceMeta?.url ?? '#'
+  const cardBg = darkMode ? '#262626' : '#fff'
+  const cardBorder = darkMode ? '1px solid #434343' : '1px solid #f0f0f0'
+  const cardMuted = darkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'
+  const cardText = darkMode ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)'
+  const pillBg = hover ? (darkMode ? '#525252' : '#000') : (darkMode ? '#262626' : '#f5f5f5')
+  const pillBorder = darkMode ? '1px solid #434343' : '1px solid #e8e8e8'
+  const pillColor = hover ? '#fff' : (darkMode ? 'rgba(255,255,255,0.65)' : '#747474')
   const cardContent = (
     <a
       href={href}
@@ -27,21 +34,21 @@ function SourcePill({ domain }: { domain: string }) {
         display: 'block',
         textDecoration: 'none',
         color: 'inherit',
-        background: '#fff',
-        border: '1px solid #f0f0f0',
+        background: cardBg,
+        border: cardBorder,
         borderRadius: 12,
         padding: 12,
-        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.35)' : '0 1px 2px rgba(0,0,0,0.04)',
         minWidth: 260,
         maxWidth: 360,
       }}
     >
-      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>{domain}</div>
+      <div style={{ fontSize: 12, color: cardMuted, marginBottom: 4 }}>{domain}</div>
       <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
         {sourceMeta?.title ?? domain}
       </div>
       {sourceMeta?.description && (
-        <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)', lineHeight: 1.4 }}>{sourceMeta.description}</div>
+        <div style={{ fontSize: 12, color: cardText, lineHeight: 1.4 }}>{sourceMeta.description}</div>
       )}
     </a>
   )
@@ -54,11 +61,11 @@ function SourcePill({ domain }: { domain: string }) {
           display: 'inline-block',
           marginTop: 4,
           padding: '2px 10px',
-          background: hover ? '#000' : '#f5f5f5',
-          border: '1px solid #e8e8e8',
+          background: pillBg,
+          border: pillBorder,
           borderRadius: 9999,
           fontSize: 12,
-          color: hover ? '#fff' : '#747474',
+          color: pillColor,
           cursor: 'pointer',
         }}
       >
@@ -68,9 +75,10 @@ function SourcePill({ domain }: { domain: string }) {
   )
 }
 
-export default function EventList() {
+export default function EventList({ darkMode = false }: { darkMode?: boolean }) {
+  const textColor = darkMode ? 'rgba(255,255,255,0.85)' : '#191919'
   return (
-    <div style={{ fontSize: 15, lineHeight: '24px', color: '#191919' }}>
+    <div style={{ fontSize: 15, lineHeight: '24px', color: textColor }}>
       <Paragraph style={{ marginBottom: 16 }}>
         Here are some <strong>Arizona State University (ASU) events</strong> happening
         today, Thursday, March 5, 2026 that you might be interested in:
@@ -92,7 +100,7 @@ export default function EventList() {
                 <span>{renderDetail(detail)}</span>
               </div>
             ))}
-            <SourcePill domain={event.source} />
+            <SourcePill domain={event.source} darkMode={darkMode} />
           </div>
         </div>
       ))}

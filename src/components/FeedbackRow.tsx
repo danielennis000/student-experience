@@ -14,8 +14,13 @@ import { mockSources } from '../data/mockData'
 
 const { Text } = Typography
 
-export default function FeedbackRow() {
+export default function FeedbackRow({ darkMode = false }: { darkMode?: boolean }) {
   const [sourcesOpen, setSourcesOpen] = useState(false)
+  const popoverBorder = darkMode ? '#434343' : '#f0f0f0'
+  const cardBg = darkMode ? '#262626' : '#fff'
+  const cardMuted = darkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'
+  const cardText = darkMode ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.65)'
+  const iconHover = darkMode ? 'rgba(255,255,255,0.85)' : '#484848'
 
   const sourcesClickContent = (
     <div style={{ width: 380, maxHeight: 420, display: 'flex', flexDirection: 'column' }}>
@@ -26,12 +31,12 @@ export default function FeedbackRow() {
           justifyContent: 'space-between',
           marginBottom: 12,
           paddingBottom: 8,
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: `1px solid ${popoverBorder}`,
         }}
       >
         <span style={{ fontWeight: 600, fontSize: 16 }}>Sources</span>
         <CloseOutlined
-          style={{ fontSize: 14, color: '#bfbfbf', cursor: 'pointer' }}
+          style={{ fontSize: 14, color: darkMode ? 'rgba(255,255,255,0.45)' : '#bfbfbf', cursor: 'pointer' }}
           onClick={() => setSourcesOpen(false)}
         />
       </div>
@@ -46,7 +51,7 @@ export default function FeedbackRow() {
           >
             <div
               style={{
-                background: '#000',
+                background: darkMode ? '#434343' : '#000',
                 color: '#fff',
                 fontSize: 11,
                 padding: '4px 10px',
@@ -57,17 +62,17 @@ export default function FeedbackRow() {
             >
               {source.name}
             </div>
-            <div style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 12, padding: 12, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>{source.name}</div>
+            <div style={{ background: cardBg, border: `1px solid ${popoverBorder}`, borderRadius: 12, padding: 12, boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.35)' : '0 1px 2px rgba(0,0,0,0.04)' }}>
+              <div style={{ fontSize: 12, color: cardMuted, marginBottom: 4 }}>{source.name}</div>
               <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{source.title || source.name}</div>
               {source.description && (
-                <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)', lineHeight: 1.4 }}>{source.description}</div>
+                <div style={{ fontSize: 12, color: cardText, lineHeight: 1.4 }}>{source.description}</div>
               )}
             </div>
           </a>
         ))}
         <div style={{ marginTop: 8 }}>
-          <a href="#" style={{ fontWeight: 600, fontSize: 13, color: '#8C1D40' }} onClick={(e) => e.preventDefault()}>
+          <a href="#" style={{ fontWeight: 600, fontSize: 13, color: darkMode ? '#FFC627' : '#8C1D40' }} onClick={(e) => e.preventDefault()}>
             More
           </a>
         </div>
@@ -89,9 +94,9 @@ export default function FeedbackRow() {
         (Icon, i) => (
           <Icon
             key={i}
-            style={{ fontSize: 14, color: '#bfbfbf', cursor: 'pointer' }}
-            onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#484848' }}
-            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#bfbfbf' }}
+            style={{ fontSize: 14, color: darkMode ? 'rgba(255,255,255,0.45)' : '#bfbfbf', cursor: 'pointer' }}
+            onMouseEnter={(e) => { (e.target as HTMLElement).style.color = iconHover }}
+            onMouseLeave={(e) => { (e.target as HTMLElement).style.color = darkMode ? 'rgba(255,255,255,0.45)' : '#bfbfbf' }}
           />
         ),
       )}

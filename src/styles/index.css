@@ -143,20 +143,31 @@ body {
 .mirage-status-text {
   font-size: 14px;
   font-weight: 500;
+  color: #484848;
+}
+
+[data-theme='dark'] .mirage-status-text {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Thinking state dark mode: orb and bars visible on dark background */
+[data-theme='dark'] .mirage-orb {
+  background: linear-gradient(135deg, #e85d8a, #5a9fb5);
+  box-shadow: 0 0 6px rgba(232, 93, 138, 0.4), 0 0 12px rgba(90, 159, 181, 0.25);
+}
+[data-theme='dark'] .mirage-bar {
   background: linear-gradient(
     90deg,
-    #484848 0%,
-    #484848 30%,
-    #8C1D40 50%,
-    #3A6073 60%,
-    #484848 70%,
-    #484848 100%
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.12) 20%,
+    rgba(90, 159, 181, 0.5) 50%,
+    rgba(255, 255, 255, 0.12) 80%,
+    rgba(255, 255, 255, 0.08) 100%
   );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: mirageTextShimmer 3s ease-in-out infinite;
+}
+[data-theme='dark'] .mirage-container {
+  background: linear-gradient(135deg, #1f1f1f 0%, #262626 100%);
+  border-color: #434343;
 }
 
 /* ===== Thinking Text Fade-In ===== */
@@ -172,7 +183,7 @@ body {
 }
 
 .thinking-text {
-  animation: fadeInUp 0.35s ease-out;
+  /* No animation - avoids bounce between step transitions */
 }
 
 /* ===== Message Entrance Animation ===== */
@@ -227,6 +238,17 @@ body {
   color: #8C1D40;
 }
 
+[data-theme='dark'] .source-pill {
+  background: #262626;
+  border-color: #434343;
+  color: rgba(255, 255, 255, 0.85);
+}
+[data-theme='dark'] .source-pill:hover {
+  background: #363636;
+  border-color: #525252;
+  color: #FFC627;
+}
+
 .source-pill .source-num {
   display: inline-flex;
   align-items: center;
@@ -271,6 +293,16 @@ body {
   background: #f5f5f5;
 }
 
+[data-theme='dark'] .sidebar-history-item:hover {
+  background: #262626;
+}
+[data-theme='dark'] .sidebar-project-item:hover {
+  background: #262626;
+}
+[data-theme='dark'] .sidebar-project-item.active {
+  background: rgba(140, 29, 64, 0.25);
+}
+
 /* ===== Custom Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -287,6 +319,13 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #bfbfbf;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #434343;
+}
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #525252;
 }
 
 /* ===== AntD Overrides ===== */
@@ -328,4 +367,123 @@ body {
 
 .success-enter {
   animation: scaleIn 0.3s ease-out;
+}
+
+/* Settings modal: design-aligned sidebar and title bar */
+.settings-modal .ant-modal-content {
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  padding: 0;
+}
+.settings-modal .ant-modal-body {
+  padding: 0 !important;
+}
+.settings-modal .ant-tabs {
+  display: flex;
+}
+.settings-modal .ant-tabs-nav {
+  background: #f5f5f5;
+  margin: 0;
+  padding: 12px 0;
+  min-width: 180px;
+  flex-shrink: 0;
+  border-radius: 12px 0 0 12px;
+}
+.settings-modal .ant-tabs-tab:first-child {
+  border-radius: 12px 0 0 0;
+}
+.settings-modal .ant-tabs-tab:last-child {
+  border-radius: 0 0 0 12px;
+}
+.settings-modal .ant-tabs-nav-wrap {
+  padding: 0;
+}
+.settings-modal .ant-tabs-nav-list {
+  width: 100%;
+  padding-left: 0;
+}
+.settings-modal .ant-tabs-tab {
+  padding: 12px 16px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+.settings-modal .ant-tabs-tab-active {
+  background: #e8e8e8;
+  color: #8C1D40;
+}
+.settings-modal .ant-tabs-ink-bar {
+  display: none;
+}
+.settings-modal .ant-tabs-tab-active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background: #8C1D40;
+  border-radius: 2px;
+}
+.settings-modal .ant-tabs-tab {
+  position: relative;
+}
+.settings-modal .ant-tabs-nav-list {
+  width: 100%;
+}
+.settings-modal .ant-tabs-tab + .ant-tabs-tab {
+  margin: 0;
+}
+.settings-modal .ant-tabs-content-holder {
+  height: 560px;
+  min-height: 0;
+  flex: 1;
+}
+.settings-modal .ant-tabs-content {
+  height: 100%;
+}
+.settings-modal .ant-tabs-tabpane {
+  height: 100%;
+}
+.settings-modal .ant-tabs-tabpane > div {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Settings modal dark mode */
+.settings-modal-dark .ant-modal-content {
+  background: #141414;
+}
+.settings-modal-dark .ant-modal-body {
+  background: #141414;
+}
+.settings-modal-dark .ant-tabs-nav {
+  background: #1f1f1f;
+}
+.settings-modal-dark .ant-tabs-tab {
+  color: rgba(255, 255, 255, 0.65);
+}
+.settings-modal-dark .ant-tabs-tab span,
+.settings-modal-dark .ant-tabs-tab div {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+.settings-modal-dark .ant-tabs-tab-active {
+  background: #303030;
+  color: #FFC627;
+}
+.settings-modal-dark .ant-tabs-tab-active span,
+.settings-modal-dark .ant-tabs-tab-active div {
+  color: #FFC627 !important;
+}
+.settings-modal-dark .ant-tabs-tab-active::after {
+  background: #FFC627;
+}
+.settings-modal-dark .ant-tabs-content-holder,
+.settings-modal-dark .ant-tabs-content,
+.settings-modal-dark .ant-tabs-tabpane {
+  background: #141414;
+}
+.settings-modal-dark .ant-tabs-tabpane > div {
+  background: #141414;
 }

@@ -16,6 +16,7 @@ interface ProfilePopoverProps {
   onSettings: () => void
   onClose: () => void
   triggerRef: React.RefObject<HTMLDivElement | null>
+  darkMode?: boolean
 }
 
 const items = [
@@ -28,7 +29,7 @@ const items = [
 const POPOVER_WIDTH = 220
 const GAP = 8
 
-export default function ProfilePopover({ onSettings, onClose, triggerRef }: ProfilePopoverProps) {
+export default function ProfilePopover({ onSettings, onClose, triggerRef, darkMode = false }: ProfilePopoverProps) {
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -66,19 +67,19 @@ export default function ProfilePopover({ onSettings, onClose, triggerRef }: Prof
           bottom: position ? window.innerHeight - position.top + GAP : 48,
           left: position?.left ?? 8,
           width: POPOVER_WIDTH,
-          background: '#fff',
-          border: '1px solid #e8e8e8',
+          background: darkMode ? '#1f1f1f' : '#fff',
+          border: darkMode ? '1px solid #434343' : '1px solid #e8e8e8',
           borderRadius: 12,
           padding: '12px 0',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+          boxShadow: darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.08)',
           zIndex: 1100,
         }}
       >
         <div style={{ padding: '4px 16px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <InfoCircleOutlined style={{ fontSize: 14, color: '#bfbfbf' }} />
-          <Text style={{ fontSize: 14 }}>{mockProfile.email}</Text>
+          <InfoCircleOutlined style={{ fontSize: 14, color: darkMode ? 'rgba(255,255,255,0.45)' : '#bfbfbf' }} />
+          <Text style={{ fontSize: 14, color: darkMode ? 'rgba(255,255,255,0.85)' : undefined }}>{mockProfile.email}</Text>
         </div>
-        <div style={{ borderTop: '1px solid #f0f0f0', margin: '0 0 4px' }} />
+        <div style={{ borderTop: darkMode ? '1px solid #434343' : '1px solid #f0f0f0', margin: '0 0 4px' }} />
         {items.map((item) => (
           <div
             key={item.key}
@@ -90,6 +91,7 @@ export default function ProfilePopover({ onSettings, onClose, triggerRef }: Prof
               cursor: 'pointer',
               fontSize: 14,
               transition: 'background 0.15s',
+              color: darkMode ? 'rgba(255,255,255,0.85)' : undefined,
             }}
             className="sidebar-history-item"
             onClick={() => {
@@ -97,7 +99,7 @@ export default function ProfilePopover({ onSettings, onClose, triggerRef }: Prof
               onClose()
             }}
           >
-            <span style={{ fontSize: 15, color: '#484848' }}>{item.icon}</span>
+            <span style={{ fontSize: 15, color: darkMode ? 'rgba(255,255,255,0.85)' : '#484848' }}>{item.icon}</span>
             {item.label}
           </div>
         ))}
