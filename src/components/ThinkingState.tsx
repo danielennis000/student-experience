@@ -14,10 +14,12 @@ export default function ThinkingState({ steps, onComplete }: ThinkingStateProps)
 
   useEffect(() => {
     if (currentStep < steps.length - 1) {
-      const timer = setTimeout(() => setCurrentStep((s) => s + 1), 1200)
+      const base = 2500
+      const jitter = Math.random() * 1200
+      const timer = setTimeout(() => setCurrentStep((s) => s + 1), base + jitter)
       return () => clearTimeout(timer)
     } else {
-      const timer = setTimeout(stableComplete, 1000)
+      const timer = setTimeout(stableComplete, 2000)
       return () => clearTimeout(timer)
     }
   }, [currentStep, steps.length, stableComplete])

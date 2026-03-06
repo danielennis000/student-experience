@@ -302,6 +302,18 @@ body {
   padding: 0 !important;
 }
 
+/* Email draft: no border-radius so text is not clipped at corners */
+.email-draft-textarea .ant-input,
+.email-draft-textarea textarea.ant-input {
+  border-radius: 0 !important;
+}
+
+/* Slack message textarea: no border-radius so text is not clipped at corners */
+.slack-message-textarea .ant-input,
+.slack-message-textarea textarea.ant-input {
+  border-radius: 0 !important;
+}
+
 /* Success checkmark animation */
 @keyframes scaleIn {
   from {

@@ -5,7 +5,6 @@ import {
   DownOutlined,
   CopyOutlined,
   EditOutlined,
-  MessageOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons'
 import { ASSETS } from '../data/assets'
@@ -23,6 +22,7 @@ import SlackComposer from './SlackComposer'
 import FeedbackRow from './FeedbackRow'
 import SettingsModal from './SettingsModal'
 import ProfilePopover from './ProfilePopover'
+import AvatarModeModal from './AvatarModeModal'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text, Paragraph } = Typography
@@ -59,8 +59,11 @@ export default function ChatLayout() {
   const [activeProject, setActiveProject] = useState('CreateAI Chat')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [avatarModeOpen, setAvatarModeOpen] = useState(false)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
+  const [projectDetailsExpanded, setProjectDetailsExpanded] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const profileTriggerRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -71,6 +74,10 @@ export default function ChatLayout() {
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
+
+  useEffect(() => {
+    setProjectDetailsExpanded(false)
+  }, [activeProject, activeProjectId])
 
   const addMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg])
@@ -202,6 +209,7 @@ export default function ChatLayout() {
   return (
     <Layout style={{ height: '100vh', background: '#fff' }}>
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <AvatarModeModal open={avatarModeOpen} onClose={() => setAvatarModeOpen(false)} />
 
       {/* ===== Sidebar ===== */}
       <Sider
@@ -275,7 +283,7 @@ export default function ChatLayout() {
                   }}
                   className="sidebar-history-item"
                 >
-                  <MessageOutlined style={{ fontSize: 12, color: '#747474', flexShrink: 0 }} />
+                  <img src={ASSETS.asuThumb} alt="" style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 4, objectFit: 'cover' }} />
                   <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
                   {activeProject === p.name && !activeProjectId && (
                     <img src={ASSETS.editIcon} alt="" style={{ width: 14, height: 14, flexShrink: 0, opacity: 0.7 }} />
@@ -324,6 +332,7 @@ export default function ChatLayout() {
 
           {/* Bottom: avatar + email */}
           <div
+            ref={profileTriggerRef}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', cursor: 'pointer', position: 'relative' }}
             onClick={() => setProfileOpen(!profileOpen)}
           >
@@ -333,7 +342,11 @@ export default function ChatLayout() {
             )}
           </div>
           {profileOpen && (
-            <ProfilePopover onSettings={() => setSettingsOpen(true)} onClose={() => setProfileOpen(false)} />
+            <ProfilePopover
+              triggerRef={profileTriggerRef}
+              onSettings={() => setSettingsOpen(true)}
+              onClose={() => setProfileOpen(false)}
+            />
           )}
         </div>
       </Sider>
@@ -358,31 +371,43 @@ export default function ChatLayout() {
           >
             {activeProject}
           </Title>
-          <img src={ASSETS.goldBadge} alt="" style={{ width: 16, height: 16, marginLeft: 6 }} />
-          <DownOutlined style={{ fontSize: 10, color: '#747474', marginLeft: 4 }} />
+          {activeProject === 'CreateAI Chat' && (
+            <img src={ASSETS.goldBadge} alt="" style={{ width: 16, height: 16, marginLeft: 6 }} />
+          )}
+          <span
+            onClick={() => setProjectDetailsExpanded((v) => !v)}
+            style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', marginLeft: 4 }}
+            title={projectDetailsExpanded ? 'Hide project details' : 'Show project details'}
+          >
+            <DownOutlined style={{ fontSize: 10, color: '#747474', transform: projectDetailsExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+          </span>
           <div style={{ flex: 1 }} />
         </Header>
 
         {/* ===== Chat Content ===== */}
         <Content style={{ overflow: 'auto', padding: '0 24px', display: 'flex', flexDirection: 'column' }}>
-          {/* Project info tooltip */}
-          {showWelcome && projectInfo.info && (
+          {/* Project details popover: directly under header, aligned with project title (only when chevron expanded) */}
+          {projectDetailsExpanded && (projectInfo.subtitle || projectInfo.info) && (
             <div
               style={{
                 maxWidth: 320,
-                margin: '12px auto 0',
+                marginTop: 12,
+                marginBottom: 0,
                 padding: '10px 16px',
                 background: '#fff',
                 border: '1px solid #e8e8e8',
                 borderRadius: 8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                alignSelf: 'flex-start',
               }}
             >
-              <Text style={{ fontSize: 14 }}>{projectInfo.subtitle}</Text>
-              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <InfoCircleOutlined style={{ fontSize: 12, color: '#bfbfbf' }} />
-                <Text type="secondary" style={{ fontSize: 13 }}>{projectInfo.info}</Text>
-              </div>
+              {projectInfo.subtitle && <Text style={{ fontSize: 14 }}>{projectInfo.subtitle}</Text>}
+              {projectInfo.info && (
+                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <InfoCircleOutlined style={{ fontSize: 12, color: '#bfbfbf' }} />
+                  <Text type="secondary" style={{ fontSize: 13 }}>{projectInfo.info}</Text>
+                </div>
+              )}
             </div>
           )}
 
@@ -409,15 +434,15 @@ export default function ChatLayout() {
             {messages.map((msg) => (
               <div key={msg.id} className="message-enter" style={{ marginBottom: 20 }}>
                 {msg.role === 'user' && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: 8 }}>
-                    <div style={{ display: 'flex', gap: 4, marginTop: 8, flexShrink: 0 }}>
-                      <CopyOutlined style={{ fontSize: 13, color: '#d0d0d0', cursor: 'pointer' }} />
-                      <EditOutlined style={{ fontSize: 13, color: '#d0d0d0', cursor: 'pointer' }} />
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                     <div
                       style={{ background: '#f3f3f3', padding: '10px 16px', borderRadius: 18, borderBottomRightRadius: 4, maxWidth: '75%' }}
                     >
                       <Text style={{ fontSize: 15 }}>{msg.text}</Text>
+                    </div>
+                    <div style={{ display: 'flex', gap: 4, marginTop: 8, flexShrink: 0 }}>
+                      <CopyOutlined style={{ fontSize: 13, color: '#d0d0d0', cursor: 'pointer' }} />
+                      <EditOutlined style={{ fontSize: 13, color: '#d0d0d0', cursor: 'pointer' }} />
                     </div>
                   </div>
                 )}
@@ -475,9 +500,9 @@ export default function ChatLayout() {
             >
               <div
                 style={{
-                  width: 34, height: 34, borderRadius: '50%', border: '1px solid #e8e8e8',
+                  width: 34, height: 34, borderRadius: '50%',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 16, color: '#484848',
+                  flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 28, color: '#484848', fontWeight: 300,
                 }}
               >
                 +
@@ -491,7 +516,14 @@ export default function ChatLayout() {
                 disabled={inputDisabled}
                 style={{ flex: 1, fontSize: 16, padding: '0 8px' }}
               />
-              <div style={{ width: 14, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', margin: '0 6px' }}>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setAvatarModeOpen(true)}
+                onKeyDown={(e) => e.key === 'Enter' && setAvatarModeOpen(true)}
+                style={{ width: 14, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', margin: '0 6px' }}
+                title="Avatar mode (voice)"
+              >
                 <img src={ASSETS.micIcon} alt="Voice" style={{ width: 14, height: 18, objectFit: 'contain', opacity: 0.6 }} />
               </div>
               <div

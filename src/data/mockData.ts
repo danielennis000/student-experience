@@ -95,7 +95,8 @@ export const mockChatHistory: MockChat[] = [
 export const projectDescriptions: Record<string, { title: string; subtitle: string; info?: string }> = {
   'CreateAI Chat': {
     title: 'What can I help you with?',
-    subtitle: 'This project answers questions about CreateAI. Just ask me!',
+    subtitle: 'I’m able to answer questions about pretty much anything. Just ask me!',
+    info: 'AI Acceleration Team @ ASU',
   },
   'BIO 181 | Chat': {
     title: 'What can I help you with?',
@@ -105,14 +106,17 @@ export const projectDescriptions: Record<string, { title: string; subtitle: stri
   'PSY 101 - Syllabot': {
     title: 'What can I help you with?',
     subtitle: 'This project answers questions about your PSY 101 syllabus. Just ask me!',
+    info: 'name123@asu.edu',
   },
   'Reflections on BIO 181': {
     title: 'What can I help you with?',
     subtitle: 'This project helps you write reflections for BIO 181. Just ask me!',
+    info: 'name123@asu.edu',
   },
   'PSY 101 - Midterm Prep': {
     title: 'What can I help you with?',
     subtitle: 'This project helps you prepare for your PSY 101 midterm. Just ask me!',
+    info: 'name123@asu.edu',
   },
 }
 
@@ -126,6 +130,39 @@ I'm thinking about going and wanted to see if anyone else from our study group w
 
 Let me know if you're interested!`,
 }
+
+export interface MockSource {
+  id: string
+  name: string
+  url: string
+  title?: string
+  description?: string
+  favicon?: string
+}
+
+export const mockSources: MockSource[] = [
+  {
+    id: 's1',
+    name: 'thecollege.asu.edu',
+    url: 'https://thecollege.asu.edu',
+    title: 'Events at The College | The College of Liberal Arts and Sciences',
+    description: 'Here you will discover a vibrant and varied array of exciting happenings taking place within The College.',
+  },
+  {
+    id: 's2',
+    name: 'asuevents.asu.edu',
+    url: 'https://asuevents.asu.edu',
+    title: 'The College Graduate Expo | ASU Events',
+    description: "As a graduate student in The College of Liberal Arts and Sciences at Arizona State University, you'll have access to career and graduate opportunities.",
+  },
+  {
+    id: 's3',
+    name: 'CreateAI Documentation',
+    url: 'https://createai.example.com/docs',
+    title: 'CreateAI Documentation',
+    description: 'Official documentation for CreateAI projects and APIs.',
+  },
+]
 
 export const mockSlackMessage = {
   channel: '#cs101-study-group',

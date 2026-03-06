@@ -1,5 +1,6 @@
-import { Typography } from 'antd'
-import { mockEvents } from '../data/mockData'
+import { useState } from 'react'
+import { Typography, Popover } from 'antd'
+import { mockEvents, mockSources } from '../data/mockData'
 
 const { Text, Paragraph } = Typography
 
@@ -11,6 +12,60 @@ function renderDetail(detail: string) {
     }
     return <span key={i}>{part}</span>
   })
+}
+
+function SourcePill({ domain }: { domain: string }) {
+  const [hover, setHover] = useState(false)
+  const sourceMeta = mockSources.find((s) => s.name === domain)
+  const href = sourceMeta?.url ?? '#'
+  const cardContent = (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'block',
+        textDecoration: 'none',
+        color: 'inherit',
+        background: '#fff',
+        border: '1px solid #f0f0f0',
+        borderRadius: 12,
+        padding: 12,
+        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+        minWidth: 260,
+        maxWidth: 360,
+      }}
+    >
+      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', marginBottom: 4 }}>{domain}</div>
+      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
+        {sourceMeta?.title ?? domain}
+      </div>
+      {sourceMeta?.description && (
+        <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.65)', lineHeight: 1.4 }}>{sourceMeta.description}</div>
+      )}
+    </a>
+  )
+  return (
+    <Popover content={cardContent} trigger="hover" placement="bottomLeft">
+      <span
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          display: 'inline-block',
+          marginTop: 4,
+          padding: '2px 10px',
+          background: hover ? '#000' : '#f5f5f5',
+          border: '1px solid #e8e8e8',
+          borderRadius: 9999,
+          fontSize: 12,
+          color: hover ? '#fff' : '#747474',
+          cursor: 'pointer',
+        }}
+      >
+        {domain}
+      </span>
+    </Popover>
+  )
 }
 
 export default function EventList() {
@@ -37,20 +92,7 @@ export default function EventList() {
                 <span>{renderDetail(detail)}</span>
               </div>
             ))}
-            <span
-              style={{
-                display: 'inline-block',
-                marginTop: 4,
-                padding: '2px 10px',
-                background: '#f5f5f5',
-                border: '1px solid #e8e8e8',
-                borderRadius: 4,
-                fontSize: 12,
-                color: '#747474',
-              }}
-            >
-              {event.source}
-            </span>
+            <SourcePill domain={event.source} />
           </div>
         </div>
       ))}

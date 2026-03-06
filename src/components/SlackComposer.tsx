@@ -65,6 +65,7 @@ export default function SlackComposer({ onSend }: SlackComposerProps) {
       </div>
 
       <div
+        className="slack-message-textarea"
         style={{
           background: '#fafafa',
           border: '1px solid #e8e8e8',
@@ -83,6 +84,7 @@ export default function SlackComposer({ onSend }: SlackComposerProps) {
             padding: 0,
             fontSize: 14,
             lineHeight: '22px',
+            borderRadius: 0,
           }}
         />
       </div>
