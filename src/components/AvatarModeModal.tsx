@@ -15,10 +15,10 @@ export default function AvatarModeModal({ open, onClose }: AvatarModeModalProps)
       open={open}
       onCancel={onClose}
       footer={null}
-      width={720}
+      width={960}
       centered
       destroyOnClose
-      styles={{ body: { padding: 0, minHeight: 420 } }}
+      styles={{ body: { padding: 0, minHeight: 640 } }}
       title="Avatar mode"
     >
       <iframe
@@ -27,7 +27,7 @@ export default function AvatarModeModal({ open, onClose }: AvatarModeModalProps)
         allow="microphone"
         style={{
           width: '100%',
-          height: 420,
+          height: 640,
           border: 'none',
           borderRadius: 8,
           display: 'block',
