@@ -43,17 +43,78 @@ export const mockEvents = [
   },
 ]
 
-export const mockAIProjects = [
-  { id: 'p1', name: 'BIO 181 | Chat', icon: 'message' },
-  { id: 'p2', name: 'PSY 101 - Syllabot', icon: 'message' },
-  { id: 'p3', name: 'Reflections on BIO 181', icon: 'message' },
-  { id: 'p4', name: 'PSY 101 - Midterm Prep', icon: 'message' },
+export interface MockAIProject {
+  id: string
+  name: string
+  icon: string
+  active?: boolean
+}
+
+export const mockAIProjects: MockAIProject[] = [
+  { id: 'p1', name: 'BIO 181 | Chat', icon: 'message', active: true },
+  { id: 'p2', name: 'PSY 101 - Syllabot', icon: 'message', active: false },
+  { id: 'p3', name: 'Reflections on BIO 181', icon: 'message', active: false },
+  { id: 'p4', name: 'PSY 101 - Midterm Prep', icon: 'message', active: false },
 ]
 
-export const mockChatHistory = [
-  { id: 'h1', title: 'Discussing atomic weights' },
-  { id: 'h2', title: 'Understanding covalent b...' },
+export interface MockChat {
+  id: string
+  title: string
+  messages: { role: 'user' | 'assistant'; text: string }[]
+}
+
+export const mockChatHistory: MockChat[] = [
+  {
+    id: 'h1',
+    title: 'BIO Assessment',
+    messages: [
+      { role: 'user', text: 'Can you do an assessment of my skills to see where I need help?' },
+      { role: 'assistant', text: "Perfect — let's do this 🧠📋\nI'll give you a **short diagnostic** (about 6–8 questions total). Answer honestly; this is about spotting patterns, not being perfect.\n\n**Question 1: Experimental Design**\nA researcher grows bacteria at three temperatures: 20°C, 30°C, and 40°C. She measures growth rate after 24 hours.\n\n**Which of the following is the dependent variable?**\n  A. Temperature\n  B. Type of bacteria\n  C. Growth rate\n  D. Time (24 hours)\n\nReply with just the letter, and I'll give you the next question." },
+      { role: 'user', text: 'A' },
+      { role: 'assistant', text: "Thanks — good start. Let's unpack that one quickly, then move on.\n\n**Question 1 – Correct answer: C (Growth rate)**\n\n• **Independent variable** = what the researcher changes → **temperature**\n• **Dependent variable** = what is measured → **growth rate**\n\nSo this tells me you may need a bit of reinforcement on **experimental design terminology**, which is very common in BIO 181 exams. Totally fixable.\n\n**Question 2: Data Interpretation (Graphs)**\nA graph shows enzyme activity vs. temperature.\nActivity increases from 10°C to 37°C, then rapidly decreases above 40°C.\n\n**What is the best explanation for the decrease in activity above 40°C?**\n\nA. The enzyme's active site changes shape (denaturation)\n  B. The substrate concentration decreases\n  C. The enzyme is used up by the reaction\n  D. The pH becomes neutral\n\nReply with the letter only." },
+    ],
+  },
+  {
+    id: 'h2',
+    title: 'Discussing atomic weights',
+    messages: [
+      { role: 'user', text: 'Can you explain how atomic weights are calculated?' },
+      { role: 'assistant', text: "Atomic weight (also called relative atomic mass) is the weighted average of the masses of all naturally occurring isotopes of an element.\n\nFor example, chlorine has two stable isotopes:\n• ³⁵Cl (75.77% abundance, mass 34.97 amu)\n• ³⁷Cl (24.23% abundance, mass 36.97 amu)\n\n**Calculation:**\n(0.7577 × 34.97) + (0.2423 × 36.97) = **35.45 amu**\n\nThis is why chlorine's atomic weight on the periodic table is 35.45, not a whole number — it reflects the natural mixture of isotopes." },
+    ],
+  },
+  {
+    id: 'h3',
+    title: 'Understanding covalent b...',
+    messages: [
+      { role: 'user', text: "What's the difference between covalent and ionic bonds?" },
+      { role: 'assistant', text: "Great question! Here's the key difference:\n\n**Covalent bonds** — atoms **share** electrons\n• Typically between two nonmetals\n• Example: H₂O (water) — oxygen shares electrons with hydrogen\n\n**Ionic bonds** — one atom **transfers** electrons to another\n• Typically between a metal and a nonmetal\n• Example: NaCl (table salt) — sodium gives an electron to chlorine\n\n**Quick rule of thumb:** If the electronegativity difference is > 1.7, it's ionic. Below that, it's covalent.\n\nWant me to go deeper into polar vs nonpolar covalent bonds?" },
+    ],
+  },
 ]
+
+export const projectDescriptions: Record<string, { title: string; subtitle: string; info?: string }> = {
+  'CreateAI Chat': {
+    title: 'What can I help you with?',
+    subtitle: 'This project answers questions about CreateAI. Just ask me!',
+  },
+  'BIO 181 | Chat': {
+    title: 'What can I help you with?',
+    subtitle: 'This project answers questions about BIO 181. Just ask me!',
+    info: 'name123@asu.edu',
+  },
+  'PSY 101 - Syllabot': {
+    title: 'What can I help you with?',
+    subtitle: 'This project answers questions about your PSY 101 syllabus. Just ask me!',
+  },
+  'Reflections on BIO 181': {
+    title: 'What can I help you with?',
+    subtitle: 'This project helps you write reflections for BIO 181. Just ask me!',
+  },
+  'PSY 101 - Midterm Prep': {
+    title: 'What can I help you with?',
+    subtitle: 'This project helps you prepare for your PSY 101 midterm. Just ask me!',
+  },
+}
 
 export const mockEmailDraft = {
   subject: 'Anyone want to attend the Life in Crisis event at 3:30?',
