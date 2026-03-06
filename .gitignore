@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.DS_Store
+*.log
+
+# Template files (not part of the React prototype)
+createai_client.py
+requirements.txt
+API_DOCUMENTATION.html
+script.js
+styles.css
+favicon.ico
+.env.example
