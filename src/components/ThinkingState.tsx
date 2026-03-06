@@ -25,7 +25,7 @@ export default function ThinkingState({ steps, onComplete }: ThinkingStateProps)
   return (
     <div className="thinking-text" key={currentStep}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Mirage size="50" speed="2.5" color="#8C1D40" />
+        <Mirage size="50" speed="7" color="#8C1D40" />
         <span className="mirage-status-text">{steps[currentStep]}</span>
       </div>
     </div>
