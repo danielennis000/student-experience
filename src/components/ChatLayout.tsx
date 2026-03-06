@@ -541,7 +541,7 @@ export default function ChatLayout() {
               <Text type="secondary" style={{ fontSize: 14, lineHeight: '18px' }}>
                 By using this AI project, you acknowledge and agree to these{' '}
                 <a style={{ color: '#8C1D40', textDecoration: 'underline' }}>terms</a>.
-                Ask me! bot may display incorrect or false information.
+                CreateAI may display incorrect or false information.
               </Text>
             </div>
           </div>
