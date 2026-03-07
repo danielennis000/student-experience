@@ -6,6 +6,7 @@ import {
   CopyOutlined,
   EditOutlined,
   InfoCircleOutlined,
+  VideoCameraAddOutlined,
 } from '@ant-design/icons'
 import { ASSETS } from '../data/assets'
 import {
@@ -23,11 +24,12 @@ import FeedbackRow from './FeedbackRow'
 import SettingsModal from './SettingsModal'
 import ProfilePopover from './ProfilePopover'
 import AvatarModeModal from './AvatarModeModal'
+import StreamingText from './StreamingText'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text, Paragraph } = Typography
 
-type MessageComponent = 'events' | 'email' | 'slack' | 'success'
+type MessageComponent = 'events' | 'email' | 'emailSuccess' | 'slack' | 'success'
 
 interface Message {
   id: string
@@ -35,6 +37,7 @@ interface Message {
   text?: string
   thinkingSteps?: string[]
   component?: MessageComponent
+  streaming?: boolean
 }
 
 type Phase =
@@ -43,6 +46,7 @@ type Phase =
   | 'results'
   | 'composing'
   | 'emailDraft'
+  | 'sendingEmail'
   | 'switching'
   | 'slackDraft'
   | 'sending'
@@ -50,6 +54,27 @@ type Phase =
 
 let messageId = 0
 const nextId = () => `msg-${++messageId}`
+
+// Placeholder suggestions for typewriter animation
+const WELCOME_PLACEHOLDERS_LIGHT = [
+  'Ask anything',
+  'Do a web search',
+  'Ask about upcoming events',
+  'Change to dark mode'
+]
+
+const WELCOME_PLACEHOLDERS_DARK = [
+  'Ask anything',
+  'Do a web search',
+  'Ask about upcoming events',
+  'Change to light mode'
+]
+
+const AFTER_RESPONSE_PLACEHOLDERS = [
+  'Send this to study group',
+  'Share',
+  'Ask anything'
+]
 
 interface ChatLayoutProps {
   darkMode?: boolean
@@ -69,8 +94,28 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   const [avatarModeOpen, setAvatarModeOpen] = useState(false)
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [projectDetailsExpanded, setProjectDetailsExpanded] = useState(false)
+  const [projectsCollapsed, setProjectsCollapsed] = useState(false)
+  const [chatsCollapsed, setChatsCollapsed] = useState(false)
+  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [displayedPlaceholder, setDisplayedPlaceholder] = useState('Ask anything')
+  const [isRecording, setIsRecording] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const profileTriggerRef = useRef<HTMLDivElement>(null)
+
+  // Use welcome placeholders initially, then switch after first response
+  // Keep welcome placeholders if only theme-change messages exist
+  // Also switch based on dark mode for the welcome screen
+  const hasOnlyThemeMessages = messages.length > 0 && messages.every(m => 
+    m.text?.toLowerCase().includes('dark mode') || 
+    m.text?.toLowerCase().includes('light mode') ||
+    m.text?.toLowerCase().includes('switched to')
+  )
+  
+  const shouldShowWelcome = (phase === 'welcome' && messages.length === 0) || hasOnlyThemeMessages
+  
+  const placeholderSuggestions = shouldShowWelcome
+    ? (darkMode ? WELCOME_PLACEHOLDERS_DARK : WELCOME_PLACEHOLDERS_LIGHT)
+    : AFTER_RESPONSE_PLACEHOLDERS
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -86,6 +131,57 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
     setProjectDetailsExpanded(false)
   }, [activeProject, activeProjectId])
 
+  // Reset placeholder index when switching between suggestion sets
+  useEffect(() => {
+    setPlaceholderIndex(0)
+  }, [messages.length])
+
+  // Typewriter effect for placeholder with backspace
+  useEffect(() => {
+    const targetText = placeholderSuggestions[placeholderIndex]
+    let currentIndex = 0
+    let isDeleting = false
+    let timeoutId: ReturnType<typeof setTimeout>
+    
+    const animate = () => {
+      if (!isDeleting) {
+        // Typing phase
+        setDisplayedPlaceholder(targetText.slice(0, currentIndex))
+        currentIndex++
+        
+        if (currentIndex > targetText.length) {
+          // Finished typing, wait then start deleting
+          timeoutId = setTimeout(() => {
+            isDeleting = true
+            currentIndex = targetText.length
+            animate()
+          }, 2000)
+        } else {
+          timeoutId = setTimeout(animate, 50)
+        }
+      } else {
+        // Deleting phase
+        setDisplayedPlaceholder(targetText.slice(0, currentIndex))
+        currentIndex--
+        
+        if (currentIndex < 0) {
+          // Finished deleting, move to next placeholder
+          setPlaceholderIndex((prev) => (prev + 1) % placeholderSuggestions.length)
+        } else {
+          timeoutId = setTimeout(animate, 30)
+        }
+      }
+    }
+    
+    // Start animation with initial delay only on first load
+    const initialDelay = placeholderIndex === 0 ? 500 : 100
+    timeoutId = setTimeout(animate, initialDelay)
+    
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [placeholderIndex, placeholderSuggestions])
+
   const addMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev, msg])
   }, [])
@@ -93,6 +189,18 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   const replaceLastMessage = useCallback((msg: Message) => {
     setMessages((prev) => [...prev.slice(0, -1), msg])
   }, [])
+
+  const markStreamed = useCallback((id: string) => {
+    setMessages((prev) => prev.map((m) => m.id === id ? { ...m, streaming: false } : m))
+  }, [])
+
+  useEffect(() => {
+    const pending = messages.find((m) => m.role === 'assistant' && m.streaming && !m.text && m.component && m.component !== 'events')
+    if (pending) {
+      const timer = setTimeout(() => markStreamed(pending.id), 500)
+      return () => clearTimeout(timer)
+    }
+  }, [messages, markStreamed])
 
   const resetChat = useCallback((projectName?: string) => {
     setMessages([])
@@ -134,7 +242,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   }
 
   const handleSearchComplete = useCallback(() => {
-    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'events' })
+    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'events', streaming: true })
     setPhase('results')
   }, [replaceLastMessage])
 
@@ -155,8 +263,18 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   }, [addMessage])
 
   const handleComposeComplete = useCallback(() => {
-    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'email' })
+    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'email', streaming: true })
     setPhase('emailDraft')
+  }, [replaceLastMessage])
+
+  const handleSendEmail = useCallback(() => {
+    addMessage({ id: nextId(), role: 'thinking', thinkingSteps: ['Sending email to study group...'] })
+    setPhase('sendingEmail')
+  }, [addMessage])
+
+  const handleSendEmailComplete = useCallback(() => {
+    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'emailSuccess', streaming: true })
+    setPhase('done')
   }, [replaceLastMessage])
 
   const handleSwitchToSlack = useCallback(() => {
@@ -177,6 +295,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
       role: 'assistant',
       text: "I've converted your message to Slack format and checked your syllabus — no conflicts with your schedule!",
       component: 'slack',
+      streaming: true,
     })
     setPhase('slackDraft')
   }, [replaceLastMessage])
@@ -187,7 +306,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   }, [addMessage])
 
   const handleSendComplete = useCallback(() => {
-    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'success' })
+    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'success', streaming: true })
     setPhase('done')
   }, [replaceLastMessage])
 
@@ -195,13 +314,14 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
     switch (phase) {
       case 'searching': return handleSearchComplete
       case 'composing': return handleComposeComplete
+      case 'sendingEmail': return handleSendEmailComplete
       case 'switching': return handleSwitchComplete
       case 'sending': return handleSendComplete
       default: return () => {}
     }
-  }, [phase, handleSearchComplete, handleComposeComplete, handleSwitchComplete, handleSendComplete])
+  }, [phase, handleSearchComplete, handleComposeComplete, handleSendEmailComplete, handleSwitchComplete, handleSendComplete])
 
-  const inputDisabled = phase !== 'welcome' && phase !== 'results'
+  const inputDisabled = phase !== 'welcome' && phase !== 'results' && phase !== 'emailDraft'
   const showWelcome = phase === 'welcome' && messages.length === 0
   const projectInfo = projectDescriptions[activeProject] || projectDescriptions['CreateAI Chat']
 
@@ -225,6 +345,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           id: nextId(),
           role: 'assistant',
           text: themeIntent === 'dark' ? 'Switched to dark mode.' : 'Switched to light mode.',
+          streaming: true,
         })
         return
       }
@@ -235,6 +356,65 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
     }
   }
 
+  const handleMicClick = () => {
+    if (isRecording) return // Prevent clicking while recording
+    
+    setIsRecording(true)
+    
+    // Determine the voice query based on phase
+    let voiceQuery = ''
+    if (phase === 'welcome') {
+      voiceQuery = 'Search the web for events at asu today'
+    } else if (phase === 'results') {
+      voiceQuery = 'Oh interesting. Can you draft an email I can send to my study group about the Life in Crisis event at 3:30. I want to see who else might want to attend?'
+    } else {
+      setIsRecording(false)
+      return
+    }
+    
+    // Simulate transcription - type out the voice query
+    let charIndex = 0
+    const typeInterval = setInterval(() => {
+      if (charIndex <= voiceQuery.length) {
+        setInputValue(voiceQuery.slice(0, charIndex))
+        charIndex++
+      } else {
+        clearInterval(typeInterval)
+        setIsRecording(false)
+        
+        // Wait a moment then submit
+        setTimeout(() => {
+          setInputValue('')
+          addMessage({ id: nextId(), role: 'user', text: voiceQuery })
+          
+          if (phase === 'welcome') {
+            setTimeout(() => {
+              addMessage({
+                id: nextId(),
+                role: 'thinking',
+                thinkingSteps: [
+                  'Searching the web...',
+                  'Analyzing 24 results...',
+                  'Personalizing for your interests...',
+                ],
+              })
+              setPhase('searching')
+            }, 400)
+          } else if (phase === 'results') {
+            setTimeout(() => {
+              addMessage({
+                id: nextId(),
+                role: 'thinking',
+                thinkingSteps: ['Crafting email...', 'Adding event details...', 'Formatting message...'],
+              })
+              setPhase('composing')
+            }, 400)
+          }
+        }, 300)
+      }
+    }, 40) // 40ms per character for realistic transcription speed
+  }
+
   return (
     <Layout style={{ height: '100vh', background: darkMode ? '#141414' : '#fff' }}>
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} darkMode={darkMode} onDarkModeChange={onDarkModeChange} avatar={avatar} onAvatarChange={onAvatarChange} />
@@ -242,11 +422,14 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
 
       {/* ===== Sidebar ===== */}
       <Sider
-        width={sidebarExpanded ? 200 : 65}
+        collapsed={!sidebarExpanded}
+        width={240}
+        collapsedWidth={65}
+        trigger={null}
+        className="app-sidebar"
         style={{
-          background: darkMode ? '#1f1f1f' : '#fff',
-          borderRight: darkMode ? '1px solid #303030' : '1px solid #fafafa',
-          transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          background: darkMode ? '#1f1f1f' : 'linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%)',
+          borderRight: darkMode ? '1px solid #303030' : '1px solid #f0f0f0',
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -254,7 +437,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '14px 0' }}>
           {/* Menu toggle */}
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', marginBottom: 8, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: sidebarExpanded ? '0 14px' : '0', justifyContent: sidebarExpanded ? 'flex-start' : 'center', marginBottom: 8, cursor: 'pointer' }}
             onClick={() => setSidebarExpanded(!sidebarExpanded)}
           >
             <img src={ASSETS.hamburgerIcon} alt="" style={{ width: 22, height: 22, flexShrink: 0 }} />
@@ -267,10 +450,10 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
 
           {/* New chat */}
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: sidebarExpanded ? '6px 14px' : '6px 0', justifyContent: sidebarExpanded ? 'flex-start' : 'center', cursor: 'pointer' }}
             onClick={() => resetChat('CreateAI Chat')}
           >
-            <img src={ASSETS.editIcon} alt="" style={{ width: 18, height: 18, flexShrink: 0, marginLeft: 2 }} />
+            <img src={ASSETS.editIcon} alt="" style={{ width: 18, height: 18, flexShrink: 0 }} />
             {sidebarExpanded && <Text style={{ fontSize: 14, whiteSpace: 'nowrap' }}>New CreateAI Chat</Text>}
           </div>
 
@@ -287,51 +470,55 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
               }}
             >
               {/* AI Projects */}
-              <div style={{ padding: '0 14px', marginBottom: 4 }}>
-                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined }}>
-                  CreateAI Projects <DownOutlined style={{ fontSize: 9 }} />
+              <div style={{ padding: '0 14px', marginBottom: 4 }} onClick={() => setProjectsCollapsed(!projectsCollapsed)}>
+                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  CreateAI Projects <DownOutlined style={{ fontSize: 9, transition: 'transform 0.2s', transform: projectsCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }} />
                 </Text>
               </div>
-              {mockAIProjects.map((p) => (
-                <div
-                  key={p.id}
-                  onClick={() => { resetChat(p.name); setActiveProjectId(null) }}
-                  style={{
-                    padding: '6px 14px 6px 20px',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: activeProject === p.name && !activeProjectId ? (darkMode ? '#303030' : '#f5f5f5') : undefined,
-                    borderRadius: 6,
-                    marginBottom: 2,
-                  }}
-                  className="sidebar-history-item"
-                >
-                  <img src={ASSETS.asuThumb} alt="" style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 4, objectFit: 'cover' }} />
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: darkMode ? 'rgba(255,255,255,0.85)' : undefined }}>{p.name}</span>
-                  {activeProject === p.name && !activeProjectId && (
-                    <img src={ASSETS.editIcon} alt="" style={{ width: 14, height: 14, flexShrink: 0, opacity: 0.7 }} />
-                  )}
-                </div>
-              ))}
-              <div style={{ padding: '4px 14px 4px 20px' }}>
-                <Tooltip title="More AI projects coming soon">
-                  <a style={{ fontSize: 13, color: darkMode ? '#FFC627' : '#8C1D40' }}>View all</a>
-                </Tooltip>
-              </div>
+              {!projectsCollapsed && (
+                <>
+                  {mockAIProjects.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => { resetChat(p.name); setActiveProjectId(null) }}
+                      style={{
+                        padding: '6px 14px 6px 20px',
+                        cursor: 'pointer',
+                        fontSize: 14,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        background: activeProject === p.name && !activeProjectId ? (darkMode ? '#303030' : '#f5f5f5') : undefined,
+                        borderRadius: 6,
+                        marginBottom: 2,
+                      }}
+                      className="sidebar-history-item"
+                    >
+                      <img src={ASSETS.asuThumb} alt="" style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 4, objectFit: 'cover' }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: darkMode ? 'rgba(255,255,255,0.85)' : undefined }}>{p.name}</span>
+                      {activeProject === p.name && !activeProjectId && (
+                        <img src={ASSETS.editIcon} alt="" style={{ width: 14, height: 14, flexShrink: 0, opacity: 0.7 }} />
+                      )}
+                    </div>
+                  ))}
+                  <div style={{ padding: '4px 14px 4px 20px' }}>
+                    <Tooltip title="More AI projects coming soon">
+                      <a style={{ fontSize: 13, color: darkMode ? '#FFC627' : '#8C1D40' }}>View all</a>
+                    </Tooltip>
+                  </div>
+                </>
+              )}
 
               {/* Chats */}
-              <div style={{ padding: '16px 14px 4px', marginBottom: 4 }}>
-                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined }}>
-                  Chats <DownOutlined style={{ fontSize: 9 }} />
+              <div style={{ padding: '16px 14px 4px', marginBottom: 4 }} onClick={() => setChatsCollapsed(!chatsCollapsed)}>
+                <Text type="secondary" style={{ fontSize: 13, cursor: 'pointer', color: darkMode ? 'rgba(255,255,255,0.65)' : undefined, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  Chats <DownOutlined style={{ fontSize: 9, transition: 'transform 0.2s', transform: chatsCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }} />
                 </Text>
               </div>
-              {mockChatHistory.map((c) => (
+              {!chatsCollapsed && mockChatHistory.map((c) => (
                 <div
                   key={c.id}
                   onClick={() => {
@@ -363,7 +550,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           {/* Bottom: avatar + email */}
           <div
             ref={profileTriggerRef}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', cursor: 'pointer', position: 'relative' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: sidebarExpanded ? '8px 14px' : '8px 0', justifyContent: sidebarExpanded ? 'flex-start' : 'center', cursor: 'pointer', position: 'relative' }}
             onClick={() => setProfileOpen(!profileOpen)}
           >
             <Avatar size={28} src={ASSETS.userAvatar} style={{ flexShrink: 0 }} />
@@ -442,21 +629,109 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
             </div>
           )}
 
-          {/* Welcome screen */}
+          {/* Welcome screen: title, subtitle, then input directly below */}
           {showWelcome && (
             <div
               className="welcome-screen"
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}
             >
-              <Title
-                level={3}
-                style={{ textAlign: 'center', marginBottom: 4, fontWeight: 700, fontSize: 24, lineHeight: '28px', letterSpacing: '-0.035px' }}
-              >
-                {projectInfo.title}
-              </Title>
-              <Text style={{ textAlign: 'center', color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontSize: 16, lineHeight: '24px' }}>
-                {projectInfo.subtitle}
-              </Text>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: 760 }}>
+                <Title
+                  level={3}
+                  style={{ textAlign: 'center', marginBottom: 4, fontWeight: 700, fontSize: 24, lineHeight: '28px', letterSpacing: '-0.035px' }}
+                >
+                  {projectInfo.title}
+                </Title>
+                <Text style={{ textAlign: 'center', color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontSize: 16, lineHeight: '24px' }}>
+                  {projectInfo.subtitle}
+                </Text>
+                <div style={{ marginTop: 24, width: '100%' }}>
+                  <div
+                    style={{
+                      border: darkMode ? '1px solid #434343' : '1px solid #f3f3f3',
+                      borderRadius: 24,
+                      height: 50,
+                      padding: '0 6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 34, height: 34, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 28, color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontWeight: 300,
+                      }}
+                    >
+                      +
+                    </div>
+                    <Input
+                      variant="borderless"
+                      placeholder={inputDisabled ? 'Demo in progress...' : displayedPlaceholder}
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onPressEnter={onSubmit}
+                      disabled={inputDisabled || isRecording}
+                      style={{ flex: 1, fontSize: 16, padding: '0 8px' }}
+                    />
+                    {/* Soundwave animation when recording */}
+                    {isRecording && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginRight: 8 }}>
+                        {['low', 'mid-low', 'mid', 'mid-high', 'high', 'highest'].map((freq, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: 3,
+                              background: darkMode ? '#FFC627' : '#8C1D40',
+                              borderRadius: 2,
+                              animation: `soundwave-${freq} ${1.2 + i * 0.1}s ease-in-out infinite`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {/* Microphone icon - simulates voice input with current suggestion */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={handleMicClick}
+                      onKeyDown={(e) => e.key === 'Enter' && handleMicClick()}
+                      style={{
+                        width: 14, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: isRecording ? 'not-allowed' : 'pointer', margin: '0 6px',
+                        ...(darkMode && { filter: 'brightness(0) invert(1)' }),
+                        ...(isRecording && { opacity: 1, filter: 'none' }),
+                      }}
+                      title="Voice input"
+                    >
+                      <img src={ASSETS.micIcon} alt="Voice" style={{ width: 14, height: 18, objectFit: 'contain', opacity: isRecording ? 1 : (darkMode ? 0.9 : 0.6) }} />
+                    </div>
+                    {/* Video camera icon - opens avatar mode */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setAvatarModeOpen(true)}
+                      onKeyDown={(e) => e.key === 'Enter' && setAvatarModeOpen(true)}
+                      style={{
+                        width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', margin: '0 6px',
+                      }}
+                      title="Avatar mode"
+                    >
+                      <VideoCameraAddOutlined style={{ fontSize: 18, color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848' }} />
+                    </div>
+                    <div
+                      onClick={onSubmit}
+                      style={{
+                        width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                        cursor: inputDisabled || !inputValue.trim() ? 'not-allowed' : 'pointer',
+                        opacity: inputDisabled || !inputValue.trim() ? 0.35 : 1, transition: 'opacity 0.2s',
+                      }}
+                    >
+                      <img src={ASSETS.sendIcon} alt="Send" style={{ width: '100%', height: '100%' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -488,25 +763,52 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                   <div style={{ maxWidth: '100%' }}>
                     {msg.text && (
                       <Paragraph style={{ fontSize: 15, marginBottom: 8, lineHeight: '24px', whiteSpace: 'pre-wrap' }}>
-                        {msg.text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
-                          part.startsWith('**') && part.endsWith('**')
-                            ? <strong key={i}>{part.slice(2, -2)}</strong>
-                            : <span key={i}>{part}</span>
+                        {msg.streaming ? (
+                          <StreamingText
+                            text={msg.text}
+                            speed={14}
+                            onComplete={() => markStreamed(msg.id)}
+                            renderChar={(visible) =>
+                              visible.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+                                part.startsWith('**') && part.endsWith('**')
+                                  ? <strong key={i}>{part.slice(2, -2)}</strong>
+                                  : <span key={i}>{part}</span>
+                              )
+                            }
+                          />
+                        ) : (
+                          msg.text.split(/(\*\*.*?\*\*)/g).map((part, i) =>
+                            part.startsWith('**') && part.endsWith('**')
+                              ? <strong key={i}>{part.slice(2, -2)}</strong>
+                              : <span key={i}>{part}</span>
+                          )
                         )}
                       </Paragraph>
                     )}
-                    {msg.component === 'events' && <EventList darkMode={darkMode} />}
-                    {msg.component === 'email' && <EmailDraft onSwitchToSlack={handleSwitchToSlack} darkMode={darkMode} />}
-                    {msg.component === 'slack' && <SlackComposer onSend={handleSendSlack} darkMode={darkMode} />}
-                    {msg.component === 'success' && (
-                      <Result
-                        icon={<CheckCircleFilled className="success-enter" style={{ color: '#52c41a', fontSize: 48 }} />}
-                        title="Message sent to #cs101-study-group!"
-                        subTitle="All 5 members have been notified."
-                        style={{ padding: '24px 0' }}
-                      />
+                    {(!msg.text || !msg.streaming) && (
+                      <div className={msg.streaming && msg.component !== 'events' ? 'stream-fade-in' : undefined}>
+                        {msg.component === 'events' && <EventList darkMode={darkMode} streaming={!!msg.streaming} onStreamComplete={() => markStreamed(msg.id)} />}
+                        {msg.component === 'email' && <EmailDraft onSwitchToSlack={handleSwitchToSlack} onSend={handleSendEmail} darkMode={darkMode} />}
+                        {msg.component === 'emailSuccess' && (
+                          <Result
+                            icon={<CheckCircleFilled className="success-enter" style={{ color: '#52c41a', fontSize: 48 }} />}
+                            title="Email sent successfully!"
+                            subTitle="Your message has been sent to your study group."
+                            style={{ padding: '24px 0' }}
+                          />
+                        )}
+                        {msg.component === 'slack' && <SlackComposer onSend={handleSendSlack} darkMode={darkMode} />}
+                        {msg.component === 'success' && (
+                          <Result
+                            icon={<CheckCircleFilled className="success-enter" style={{ color: '#52c41a', fontSize: 48 }} />}
+                            title="Message sent to #cs101-study-group!"
+                            subTitle="All 5 members have been notified."
+                            style={{ padding: '24px 0' }}
+                          />
+                        )}
+                      </div>
                     )}
-                    <FeedbackRow darkMode={darkMode} />
+                    {!msg.streaming && <FeedbackRow darkMode={darkMode} />}
                   </div>
                 )}
               </div>
@@ -515,74 +817,114 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           </div>
         </Content>
 
-        {/* ===== Input Footer ===== */}
+        {/* ===== Input Footer: input bar only when chat started; disclaimer always at bottom ===== */}
         <div style={{ padding: '12px 24px 16px', background: darkMode ? '#141414' : '#fff' }}>
           <div style={{ maxWidth: 760, margin: '0 auto' }}>
-            <div
-              style={{
-                border: darkMode ? '1px solid #434343' : '1px solid #f3f3f3',
-                borderRadius: 24,
-                height: 50,
-                padding: '0 6px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
+            {!showWelcome && (
               <div
                 style={{
-                  width: 34, height: 34, borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 28, color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontWeight: 300,
-                }}
-              >
-                +
-              </div>
-              <Input
-                variant="borderless"
-                placeholder={inputDisabled ? 'Demo in progress...' : 'Ask anything'}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onPressEnter={onSubmit}
-                disabled={inputDisabled}
-                style={{ flex: 1, fontSize: 16, padding: '0 8px' }}
-              />
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setAvatarModeOpen(true)}
-                onKeyDown={(e) => e.key === 'Enter' && setAvatarModeOpen(true)}
-                style={{
-                  width: 14,
-                  height: 18,
+                  border: darkMode ? '1px solid #434343' : '1px solid #f3f3f3',
+                  borderRadius: 24,
+                  height: 50,
+                  padding: '0 6px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  cursor: 'pointer',
-                  margin: '0 6px',
-                  ...(darkMode && { filter: 'brightness(0) invert(1)' }),
+                  gap: 4,
                 }}
-                title="Avatar mode (voice)"
               >
-                <img
-                  src={ASSETS.micIcon}
-                  alt="Voice"
-                  style={{ width: 14, height: 18, objectFit: 'contain', opacity: darkMode ? 0.9 : 0.6 }}
+                <div
+                  style={{
+                    width: 34, height: 34, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, marginLeft: 2, cursor: 'pointer', fontSize: 28, color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontWeight: 300,
+                  }}
+                >
+                  +
+                </div>
+                <Input
+                  variant="borderless"
+                  placeholder={inputDisabled ? 'Demo in progress...' : displayedPlaceholder}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onPressEnter={onSubmit}
+                  disabled={inputDisabled || isRecording}
+                  style={{ flex: 1, fontSize: 16, padding: '0 8px' }}
                 />
+                {/* Soundwave animation when recording */}
+                {isRecording && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginRight: 8 }}>
+                    {['low', 'mid-low', 'mid', 'mid-high', 'high', 'highest'].map((freq, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: 3,
+                          background: darkMode ? '#FFC627' : '#8C1D40',
+                          borderRadius: 2,
+                          animation: `soundwave-${freq} ${1.2 + i * 0.1}s ease-in-out infinite`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* Microphone icon - simulates voice input with current suggestion */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={handleMicClick}
+                  onKeyDown={(e) => e.key === 'Enter' && handleMicClick()}
+                  style={{
+                    width: 14,
+                    height: 18,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    cursor: isRecording ? 'not-allowed' : 'pointer',
+                    margin: '0 6px',
+                    ...(darkMode && { filter: 'brightness(0) invert(1)' }),
+                    ...(isRecording && { opacity: 1, filter: 'none' }),
+                  }}
+                  title="Voice input"
+                >
+                  <img
+                    src={ASSETS.micIcon}
+                    alt="Voice"
+                    style={{ width: 14, height: 18, objectFit: 'contain', opacity: isRecording ? 1 : (darkMode ? 0.9 : 0.6) }}
+                  />
+                </div>
+                {/* Video camera icon - opens avatar mode */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setAvatarModeOpen(true)}
+                  onKeyDown={(e) => e.key === 'Enter' && setAvatarModeOpen(true)}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    cursor: 'pointer',
+                    margin: '0 6px',
+                  }}
+                  title="Avatar mode"
+                >
+                  <VideoCameraAddOutlined style={{ fontSize: 18, color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848' }} />
+                </div>
+                <div
+                  onClick={onSubmit}
+                  style={{
+                    width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                    cursor: inputDisabled || !inputValue.trim() ? 'not-allowed' : 'pointer',
+                    opacity: inputDisabled || !inputValue.trim() ? 0.35 : 1, transition: 'opacity 0.2s',
+                  }}
+                >
+                  <img src={ASSETS.sendIcon} alt="Send" style={{ width: '100%', height: '100%' }} />
+                </div>
               </div>
-              <div
-                onClick={onSubmit}
-                style={{
-                  width: 34, height: 34, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-                  cursor: inputDisabled || !inputValue.trim() ? 'not-allowed' : 'pointer',
-                  opacity: inputDisabled || !inputValue.trim() ? 0.35 : 1, transition: 'opacity 0.2s',
-                }}
-              >
-                <img src={ASSETS.sendIcon} alt="Send" style={{ width: '100%', height: '100%' }} />
-              </div>
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 8 }}>
+            )}
+            <div style={{ textAlign: 'center', marginTop: showWelcome ? 0 : 8 }}>
               <Text type="secondary" style={{ fontSize: 14, lineHeight: '18px' }}>
                 By using this AI project, you acknowledge and agree to these{' '}
                 <a style={{ color: darkMode ? '#FFC627' : '#8C1D40', textDecoration: 'underline' }}>terms</a>.

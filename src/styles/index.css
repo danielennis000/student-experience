@@ -337,6 +337,17 @@ body {
   min-height: 100vh;
 }
 
+/* Sidebar slide-in/slide-out when menu is opened or closed */
+.app-sidebar.ant-layout-sider {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    flex 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.app-sidebar.ant-layout-sider .ant-layout-sider-children {
+  transition: opacity 0.2s ease 0.05s;
+}
+
 .ant-drawer-body {
   padding: 0 !important;
 }
@@ -486,4 +497,62 @@ body {
 }
 .settings-modal-dark .ant-tabs-tabpane > div {
   background: #141414;
+}
+
+@keyframes streamFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stream-fade-in {
+  animation: streamFadeIn 0.4s ease-out both;
+}
+
+/* Soundwave animations for different frequency bands */
+@keyframes soundwave-low {
+  0% { height: 18px; }
+  20% { height: 28px; }
+  40% { height: 22px; }
+  60% { height: 30px; }
+  80% { height: 20px; }
+  100% { height: 18px; }
+}
+
+@keyframes soundwave-mid-low {
+  0% { height: 14px; }
+  25% { height: 24px; }
+  50% { height: 18px; }
+  75% { height: 26px; }
+  100% { height: 14px; }
+}
+
+@keyframes soundwave-mid {
+  0% { height: 10px; }
+  30% { height: 20px; }
+  60% { height: 14px; }
+  90% { height: 22px; }
+  100% { height: 10px; }
+}
+
+@keyframes soundwave-mid-high {
+  0% { height: 12px; }
+  35% { height: 18px; }
+  65% { height: 22px; }
+  85% { height: 16px; }
+  100% { height: 12px; }
+}
+
+@keyframes soundwave-high {
+  0% { height: 8px; }
+  20% { height: 16px; }
+  45% { height: 12px; }
+  70% { height: 18px; }
+  100% { height: 8px; }
+}
+
+@keyframes soundwave-highest {
+  0% { height: 6px; }
+  25% { height: 14px; }
+  50% { height: 10px; }
+  75% { height: 12px; }
+  100% { height: 6px; }
 }
