@@ -883,11 +883,12 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                         style={{
                           padding: '8px 16px',
                           borderRadius: 20,
-                          border: darkMode ? '1px solid #434343' : '1px solid #e8e8e8',
-                          background: darkMode ? '#262626' : '#f5f5f5',
-                          color: darkMode ? 'rgba(255,255,255,0.85)' : '#191919',
+                          border: darkMode ? '0px solid #434343' : '0px solid rgb(232, 232, 232)',
+                          background: darkMode ? '#262626' : '#fff',
+                          color: darkMode ? 'rgba(255,255,255,0.85)' : 'rgb(25, 25, 25)',
                           fontSize: 14,
                           cursor: 'pointer',
+                          boxShadow: darkMode ? undefined : '0px 0px 8px rgba(0, 0, 0, .15)',
                           width: isMobile ? '100%' : undefined,
                         }}
                       >
