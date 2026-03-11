@@ -853,16 +853,16 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                           width: 24, 
                           height: 24, 
                           borderRadius: '50%', 
-                          background: darkMode ? '#8C1D40' : '#8C1D40',
+                          background: (msg.source === 'BIO 181 Chat' || msg.source === 'BIO 181 Syllabot') ? '#FFC627' : (darkMode ? '#8C1D40' : '#8C1D40'),
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: 12,
+                          fontSize: (msg.source === 'BIO 181 Chat' || msg.source === 'BIO 181 Syllabot') ? 14 : 12,
                           fontWeight: 600,
                           color: '#fff',
                           flexShrink: 0
                         }}>
-                          {msg.source.charAt(0)}
+                          {(msg.source === 'BIO 181 Chat' || msg.source === 'BIO 181 Syllabot') ? '🧬' : msg.source.charAt(0)}
                         </div>
                         <Text style={{ fontSize: 13, fontWeight: 500, color: darkMode ? 'rgba(255,255,255,0.85)' : '#191919' }}>
                           {msg.source}

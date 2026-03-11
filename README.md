@@ -21,10 +21,12 @@ Frontend app for the ASU Campus Connect experience, built with React, TypeScript
 
 #### BIO 181 Chat Flow
 1. **Syllabus Query**: Ask about exam dates, course details
-   - Response from "BIO 181 Syllabot"
+   - Response from "BIO 181 Syllabot" (🧬 DNA emoji in ASU gold badge)
    - Shows exam date, time, location, and covered chapters
 2. **Email Drafting**: Request professional emails to professors
-   - Powered by "Gmail MCP"
+   - Powered by "BIO 181 Chat" (🧬 DNA emoji in ASU gold badge)
+   - Automatically addressed to Professor Wilson
+   - Student info: Maria Rodriguez (ASURITE: mrodriguez123)
    - Professional formatting with proper academic tone
    - Direct send capability (no Slack option for professor emails)
 
