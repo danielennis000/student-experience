@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
 import { theme } from 'antd'
 import { asuTheme } from './theme/asuTheme'
@@ -81,7 +81,8 @@ export default function App() {
     >
       <HashRouter>
         <Routes>
-          <Route path="/" element={<MainChat darkMode={darkMode} setDarkMode={setDarkMode} avatar={avatar} setAvatar={setAvatar} />} />
+          <Route path="/" element={<Navigate to="/onboarding" replace />} />
+          <Route path="/first-semester" element={<MainChat darkMode={darkMode} setDarkMode={setDarkMode} avatar={avatar} setAvatar={setAvatar} />} />
           <Route path="/onboarding" element={<MainChat darkMode={darkMode} setDarkMode={setDarkMode} avatar={avatar} setAvatar={setAvatar} onboardingMode />} />
         </Routes>
       </HashRouter>

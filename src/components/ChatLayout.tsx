@@ -636,7 +636,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           {/* New chat */}
           <div
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: sidebarExpanded ? '6px 14px' : '6px 0', justifyContent: sidebarExpanded ? 'flex-start' : 'center', cursor: 'pointer' }}
-            onClick={() => (onboardingMode ? navigate('/') : resetChat('CreateAI Chat'))}
+            onClick={() => (onboardingMode ? navigate('/first-semester') : resetChat('CreateAI Chat'))}
           >
             <img src={ASSETS.editIcon} alt="" style={{ width: 18, height: 18, flexShrink: 0 }} />
             {sidebarExpanded && <Text style={{ fontSize: 14, whiteSpace: 'nowrap' }}>New CreateAI Chat</Text>}
@@ -864,7 +864,17 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                   {onboardingMode ? onboardingWelcome.subtitle : projectInfo.subtitle}
                 </Text>
                 {onboardingMode && (
-                  <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      marginTop: 16,
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      flexWrap: isMobile ? 'nowrap' : 'wrap',
+                      gap: 8,
+                      justifyContent: 'center',
+                      width: '100%',
+                    }}
+                  >
                     {onboardingWelcome.suggestions.map((s) => (
                       <button
                         key={s}
@@ -878,6 +888,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                           color: darkMode ? 'rgba(255,255,255,0.85)' : '#191919',
                           fontSize: 14,
                           cursor: 'pointer',
+                          width: isMobile ? '100%' : undefined,
                         }}
                       >
                         {s}

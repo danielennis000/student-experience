@@ -38,7 +38,8 @@ Same Campus Connect chat UI, but in the state of **Maria**—an admitted student
 - **Product tour**: “Show me around” opens a short wizard that explains where to type, where responses appear, and how to use the menu.
 - **Q&A**: Questions about accepting admission, financial aid, or class registration get mock answers (my.asu.edu, FAFSA, registration steps). Other questions get a short prompt to try those topics or take the tour.
 
-From the main app, open the sidebar and click **Onboarding demo** to go to `/#/onboarding`. From onboarding, click **First semester experience** in the sidebar to return to the enrolled view.
+- **Root** `/#/` redirects to **onboarding** `/#/onboarding`.
+- **Main app (first semester)**: `/#/first-semester`. From onboarding, click **New CreateAI Chat** to go here. From the main app, open the sidebar and click **Onboarding demo** to go to `/#/onboarding`.
 
 ### UI Features
 - Dark/Light mode toggle
