@@ -9,4 +9,10 @@ export const ASSETS = {
   sendIcon: `${base}assets/99c0ea3cc31c6a40d854ad55a15ba3c6fe3f4783.svg`,
   micIcon: `${base}assets/dba37afd6227f80d38f2a90eed178cfc75c949e0.svg`,
   asuThumb: `${base}asu_thumb.png`,
+  onboardingIllustrations: [
+    `${base}illustrations/onboarding-1.jpg`,
+    `${base}illustrations/onboarding-2.jpg`,
+    `${base}illustrations/onboarding-3.jpg`,
+    `${base}illustrations/onboarding-4.jpg`,
+  ],
 }

@@ -1,39 +1,29 @@
 import { useState, useEffect } from 'react'
 import { Modal, Button, Typography } from 'antd'
-import {
-  LeftOutlined,
-  MessageOutlined,
-  InboxOutlined,
-  MenuOutlined,
-  CheckCircleOutlined,
-} from '@ant-design/icons'
-import type { ReactNode } from 'react'
+import { LeftOutlined } from '@ant-design/icons'
+import { ASSETS } from '../data/assets'
 
 const { Title, Text } = Typography
 
-const STEP_ICON_STYLE = { fontSize: 48, color: '#8C1D40' }
+const STEP_IMAGE_STYLE = { width: '100%', maxWidth: 280, height: 'auto', borderRadius: 8, objectFit: 'cover' as const }
 const STEP_CONTENT_MIN_HEIGHT = 140
 
-const TOUR_STEPS: { title: string; content: string; icon: ReactNode }[] = [
+const TOUR_STEPS: { title: string; content: string }[] = [
   {
     title: 'Ask anything here',
     content: 'Type your question in this box—like "How do I accept my admission?" or "When is the FAFSA deadline?"—and press Enter or tap the send button.',
-    icon: <MessageOutlined style={STEP_ICON_STYLE} />,
   },
   {
     title: 'Personalized for you',
     content: 'I have access to information for the courses you are enrolled in, past grades, real-time searches about campus events, and tools to take action on your behalf.',
-    icon: <InboxOutlined style={STEP_ICON_STYLE} />,
   },
   {
     title: 'Use the menu for new chats',
     content: 'Open the menu on the left to start a new conversation anytime. Once you’re enrolled in courses, you’ll see projects and chat history here too.',
-    icon: <MenuOutlined style={STEP_ICON_STYLE} />,
   },
   {
     title: "You're all set",
     content: 'Try asking anything! I’m here to help you get started on your journey at ASU.',
-    icon: <CheckCircleOutlined style={STEP_ICON_STYLE} />,
   },
 ]
 
@@ -71,8 +61,12 @@ export default function OnboardingTour({ open, onClose, darkMode }: OnboardingTo
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
-        <div style={{ marginBottom: 16 }}>{current.icon}</div>
-        <Title level={5} style={{ margin: 0, marginBottom: 8, textAlign: 'center' }}>
+        <img
+          src={ASSETS.onboardingIllustrations[step]}
+          alt=""
+          style={STEP_IMAGE_STYLE}
+        />
+        <Title level={5} style={{ margin: 16, marginBottom: 8, textAlign: 'center' }}>
           {current.title}
         </Title>
       </div>
