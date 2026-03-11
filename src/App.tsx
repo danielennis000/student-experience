@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
 import { theme } from 'antd'
 import { asuTheme } from './theme/asuTheme'
@@ -10,6 +11,32 @@ const AVATAR_STORAGE_KEY = 'createai-avatar'
 
 const AVATAR_OPTIONS = ['liv', 'anne', 'mia', 'kevin', 'richard'] as const
 export type AvatarId = (typeof AVATAR_OPTIONS)[number]
+
+function MainChat({
+  darkMode,
+  setDarkMode,
+  avatar,
+  setAvatar,
+  onboardingMode = false,
+}: {
+  darkMode: boolean
+  setDarkMode: (v: boolean) => void
+  avatar: AvatarId
+  setAvatar: (v: AvatarId) => void
+  onboardingMode?: boolean
+}) {
+  return (
+    <DarkModeProvider darkMode={darkMode} setDarkMode={setDarkMode}>
+      <ChatLayout
+        darkMode={darkMode}
+        onDarkModeChange={setDarkMode}
+        avatar={avatar}
+        onAvatarChange={setAvatar}
+        onboardingMode={onboardingMode}
+      />
+    </DarkModeProvider>
+  )
+}
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -52,9 +79,12 @@ export default function App() {
           : asuTheme
       }
     >
-      <DarkModeProvider darkMode={darkMode} setDarkMode={setDarkMode}>
-        <ChatLayout darkMode={darkMode} onDarkModeChange={setDarkMode} avatar={avatar} onAvatarChange={setAvatar} />
-      </DarkModeProvider>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<MainChat darkMode={darkMode} setDarkMode={setDarkMode} avatar={avatar} setAvatar={setAvatar} />} />
+          <Route path="/onboarding" element={<MainChat darkMode={darkMode} setDarkMode={setDarkMode} avatar={avatar} setAvatar={setAvatar} onboardingMode />} />
+        </Routes>
+      </HashRouter>
     </ConfigProvider>
   )
 }

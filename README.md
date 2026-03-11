@@ -30,6 +30,16 @@ Frontend app for the ASU Campus Connect experience, built with React, TypeScript
    - Professional formatting with proper academic tone
    - Direct send capability (no Slack option for professor emails)
 
+### Onboarding (`/#/onboarding`)
+Same Campus Connect chat UI, but in the state of **Maria**—an admitted student who has not enrolled in anything and has no chat history yet:
+
+- **Empty sidebar**: No projects (no BIO 181, PSY 101, etc.) and no past chats.
+- **Welcome screen**: “You’re in! What would you like to do first?” with suggestion chips (e.g. “How do I accept my admission?”, “When do I apply for financial aid?”, “How do I register for classes?”) and a **Show me around** button.
+- **Product tour**: “Show me around” opens a short wizard that explains where to type, where responses appear, and how to use the menu.
+- **Q&A**: Questions about accepting admission, financial aid, or class registration get mock answers (my.asu.edu, FAFSA, registration steps). Other questions get a short prompt to try those topics or take the tour.
+
+From the main app, open the sidebar and click **Onboarding demo** to go to `/#/onboarding`. From onboarding, click **First semester experience** in the sidebar to return to the enrolled view.
+
 ### UI Features
 - Dark/Light mode toggle
 - Collapsible sidebar with project navigation
@@ -44,6 +54,7 @@ Frontend app for the ASU Campus Connect experience, built with React, TypeScript
 - React 18 + TypeScript
 - Vite 5
 - Ant Design 5
+- React Router 6
 
 ## Prerequisites
 
@@ -103,11 +114,12 @@ src/
 │   ├── ChatLayout.tsx   # Main chat interface
 │   ├── EmailDraft.tsx   # Email composer
 │   ├── EventList.tsx    # Event display
+│   ├── OnboardingTour.tsx  # Wizard for onboarding
 │   └── ...
 ├── contexts/            # React contexts
 │   └── DarkModeContext.tsx
 ├── data/                # Mock data and constants
-│   ├── mockData.ts      # Chat history, projects, events
+│   ├── mockData.ts      # Chat history, projects, events, onboarding copy
 │   └── assets.ts        # Asset paths
 └── main.tsx             # App entry point
 ```

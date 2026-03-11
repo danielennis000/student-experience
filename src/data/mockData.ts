@@ -92,15 +92,55 @@ export const mockChatHistory: MockChat[] = [
   },
 ]
 
+// Onboarding welcome (admitted student, no projects/chats yet)
+export const onboardingWelcome = {
+  title: "Ready to become a Sun Devil, Maria?",
+  subtitle: "I'm your AI assistant designed to help you along your journey at ASU.",
+  suggestions: [
+    'How do I accept my admission?',
+    'When do I apply for financial aid?',
+    'How do I register for classes?',
+  ],
+}
+
+// Mock responses for onboarding Q&A
+export const onboardingResponses: Record<string, string> = {
+  accept: `**Accepting your admission**
+
+1. Go to **my.asu.edu** and sign in with your ASURITE credentials.
+2. Look for your **Application Status** or **Admission** tile.
+3. Click **Accept Admission** and complete any required steps (e.g., paying the enrollment deposit if required).
+4. You’ll get a confirmation once it’s done. After that, you can move on to financial aid and class registration.
+
+If you don’t see an option to accept, check your admission letter or contact the **Admission Services** team.`,
+  financial: `**Financial aid and FAFSA**
+
+1. **FAFSA**: Submit the **Free Application for Federal Student Aid** at **fafsa.gov**. Use ASU’s school code: **001081**. The FAFSA opens in December for the next academic year—apply as early as you can.
+2. **ASU priority date**: ASU has a priority filing date (often in January or early spring). Submitting by then helps you get the best consideration for grants and aid.
+3. **Check your status**: After submitting, check **my.asu.edu** → **Finances** for your aid status and any additional steps.
+4. **Scholarships**: Look at **scholarships.asu.edu** for university and external scholarships.
+
+If you have questions, reach out to **Financial Aid and Scholarship Services**.`,
+  register: `**Registering for classes**
+
+1. **Get advised**: New students usually need to complete orientation and/or meet with an advisor before registering. Check your ASU email and **my.asu.edu** for next steps.
+2. **Registration dates**: Your specific registration date is in **my.asu.edu** under **My Programs** or **Registration**. You’ll get an enrollment appointment.
+3. **Pick classes**: Use the **Class Search** in the Student Center to find courses. Add them to your cart, then complete enrollment when your appointment opens.
+4. **Holds**: If you see a hold (e.g., financial, immunization), resolve it in **my.asu.edu** so it doesn’t block registration.
+
+Need help choosing classes? Your advisor or this assistant can help once you’re in the system.`,
+  default: `I can help you with **accepting your admission**, **financial aid** (including FAFSA), and **registering for classes**. Just ask something like:\n\n• "How do I accept my admission?"\n• "When do I apply for financial aid?"\n• "How do I register for classes?"\n\nYou can also click **Show me around** to take a quick tour of how this chat works.`,
+}
+
 export const projectDescriptions: Record<string, { title: string; subtitle: string; info?: string }> = {
   'CreateAI Chat': {
-    title: 'Hi Maria, what can I help you with?',
-    subtitle: 'I’m able to answer questions about pretty much anything. Just ask me!',
+    title: 'Welcome back, Maria!',
+    subtitle: 'Anything on your mind today?',
     info: 'AI Acceleration Team @ ASU',
   },
   'BIO 181 | Chat': {
-    title: 'How can I help you today?',
-    subtitle: 'This project answers questions about BIO 181. Just ask me!',
+    title: 'What do you need help with?',
+    subtitle: 'This project has access to your course details like assignments, contacts, and key dates',
     info: 'name123@asu.edu',
   },
   'PSY 101 - Syllabot': {

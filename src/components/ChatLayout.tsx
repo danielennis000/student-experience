@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Layout, Input, Typography, Avatar, Result, Tooltip } from 'antd'
 import {
   CheckCircleFilled,
@@ -15,6 +16,8 @@ import {
   mockChatHistory,
   projectDescriptions,
   mockBioEmailDraft,
+  onboardingWelcome,
+  onboardingResponses,
   type MockChat,
 } from '../data/mockData'
 import ThinkingState from './ThinkingState'
@@ -26,6 +29,7 @@ import SettingsModal from './SettingsModal'
 import ProfilePopover from './ProfilePopover'
 import AvatarModeModal from './AvatarModeModal'
 import StreamingText from './StreamingText'
+import OnboardingTour from './OnboardingTour'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text, Paragraph } = Typography
@@ -87,9 +91,11 @@ interface ChatLayoutProps {
   onDarkModeChange?: (value: boolean) => void
   avatar?: string
   onAvatarChange?: (value: string) => void
+  /** Admitted student view: no projects/chats, onboarding welcome + tour */
+  onboardingMode?: boolean
 }
 
-export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar = 'liv', onAvatarChange }: ChatLayoutProps) {
+export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar = 'liv', onAvatarChange, onboardingMode = false }: ChatLayoutProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [phase, setPhase] = useState<Phase>('welcome')
   const [inputValue, setInputValue] = useState('')
@@ -105,8 +111,33 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState('Ask anything')
   const [isRecording, setIsRecording] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const profileTriggerRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+
+  // Tablet and below: sidebar hidden by default, open via hamburger (overlay)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  useEffect(() => {
+    if (isMobile) setSidebarExpanded(false)
+  }, [isMobile])
+
+  // Onboarding: open tour automatically first time only
+  useEffect(() => {
+    if (!onboardingMode) return
+    try {
+      if (localStorage.getItem('createai-onboarding-tour-seen') !== 'true') {
+        setTourOpen(true)
+      }
+    } catch {}
+  }, [onboardingMode])
 
   // Use welcome placeholders initially, then switch after first response
   // Keep welcome placeholders if only theme-change messages exist
@@ -384,6 +415,25 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
 
   const onSubmit = () => {
     if (phase === 'welcome') {
+      // Onboarding mode: answer admission/financial aid/registration questions
+      if (onboardingMode && inputValue.trim()) {
+        const userText = inputValue.trim()
+        const q = userText.toLowerCase()
+        setInputValue('')
+        addMessage({ id: nextId(), role: 'user', text: userText })
+        let key = 'default'
+        if (/accept|admission|enroll|enrollment/.test(q)) key = 'accept'
+        else if (/financial|fafsa|aid|scholarship|grant/.test(q)) key = 'financial'
+        else if (/register|class|course|enroll/.test(q)) key = 'register'
+        addMessage({
+          id: nextId(),
+          role: 'assistant',
+          text: onboardingResponses[key],
+          streaming: true,
+        })
+        return
+      }
+
       const themeIntent = detectThemeIntent(inputValue)
       if (themeIntent !== null) {
         onDarkModeChange?.(themeIntent === 'dark')
@@ -399,7 +449,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
       }
       
       // Check if this is BIO 181 Chat and trigger the bio workflow
-      if (activeProject === 'BIO 181 | Chat') {
+      if (!onboardingMode && activeProject === 'BIO 181 | Chat') {
         const query = inputValue
         setInputValue('')
         addMessage({ id: nextId(), role: 'user', text: query })
@@ -506,21 +556,69 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
     <Layout style={{ height: '100vh', background: darkMode ? '#141414' : '#fff' }}>
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} darkMode={darkMode} onDarkModeChange={onDarkModeChange} avatar={avatar} onAvatarChange={onAvatarChange} />
       <AvatarModeModal open={avatarModeOpen} onClose={() => setAvatarModeOpen(false)} selectedAvatar={avatar} />
+      {onboardingMode && (
+        <OnboardingTour
+          open={tourOpen}
+          onClose={() => {
+            setTourOpen(false)
+            try {
+              localStorage.setItem('createai-onboarding-tour-seen', 'true')
+            } catch {}
+          }}
+          darkMode={darkMode}
+        />
+      )}
 
-      {/* ===== Sidebar ===== */}
-      <Sider
-        collapsed={!sidebarExpanded}
-        width={240}
-        collapsedWidth={65}
-        trigger={null}
-        className="app-sidebar"
-        style={{
-          background: darkMode ? '#1f1f1f' : 'linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%)',
-          borderRight: darkMode ? '1px solid #303030' : '1px solid #f0f0f0',
-          overflow: 'hidden',
-          position: 'relative',
-        }}
+      {/* Backdrop when sidebar open on mobile/tablet */}
+      {isMobile && sidebarExpanded && (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Close menu"
+          onClick={() => setSidebarExpanded(false)}
+          onKeyDown={(e) => e.key === 'Enter' && setSidebarExpanded(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'rgba(0,0,0,0.5)',
+            transition: 'opacity 0.2s ease',
+          }}
+        />
+      )}
+
+      {/* ===== Sidebar (fixed overlay on tablet and below when open) ===== */}
+      <div
+        style={
+          isMobile
+            ? {
+                position: 'fixed',
+                left: 0,
+                top: 0,
+                height: '100%',
+                zIndex: 1001,
+                width: sidebarExpanded ? 240 : 0,
+                overflow: 'hidden',
+                transition: 'width 0.2s ease',
+                boxShadow: sidebarExpanded ? '2px 0 8px rgba(0,0,0,0.15)' : 'none',
+              }
+            : undefined
+        }
       >
+        <Sider
+          collapsed={!sidebarExpanded}
+          width={240}
+          collapsedWidth={isMobile ? 0 : 65}
+          trigger={null}
+          className="app-sidebar"
+          style={{
+            background: darkMode ? '#1f1f1f' : 'linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%)',
+            borderRight: darkMode ? '1px solid #303030' : '1px solid #f0f0f0',
+            overflow: 'hidden',
+            position: isMobile ? 'relative' : 'relative',
+            height: '100%',
+          }}
+        >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '14px 0' }}>
           {/* Menu toggle */}
           <div
@@ -538,14 +636,17 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           {/* New chat */}
           <div
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: sidebarExpanded ? '6px 14px' : '6px 0', justifyContent: sidebarExpanded ? 'flex-start' : 'center', cursor: 'pointer' }}
-            onClick={() => resetChat('CreateAI Chat')}
+            onClick={() => (onboardingMode ? navigate('/') : resetChat('CreateAI Chat'))}
           >
             <img src={ASSETS.editIcon} alt="" style={{ width: 18, height: 18, flexShrink: 0 }} />
             {sidebarExpanded && <Text style={{ fontSize: 14, whiteSpace: 'nowrap' }}>New CreateAI Chat</Text>}
           </div>
 
-          {/* Expanded content */}
-          {sidebarExpanded && (
+          
+          
+
+          {/* Expanded content: projects + chats (hidden in onboarding mode) */}
+          {sidebarExpanded && !onboardingMode && (
             <div
               style={{
                 flex: 1,
@@ -630,6 +731,13 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
               ))}
             </div>
           )}
+          {sidebarExpanded && onboardingMode && (
+            <div style={{ flex: 1, padding: '16px 14px 0', opacity: 0.7 }}>
+              <Text type="secondary" style={{ fontSize: 13, color: darkMode ? 'rgba(255,255,255,0.5)' : undefined }}>
+                No projects or chats yet. Once you’re enrolled in courses, they’ll show up here.
+              </Text>
+            </div>
+          )}
 
           {!sidebarExpanded && <div style={{ flex: 1 }} />}
 
@@ -654,13 +762,14 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           )}
         </div>
       </Sider>
+      </div>
 
-      <Layout style={{ background: darkMode ? '#141414' : '#fff' }}>
+      <Layout style={{ background: darkMode ? '#141414' : '#fff', flex: 1, minWidth: 0 }}>
         {/* ===== Header ===== */}
         <Header
           style={{
             background: darkMode ? '#141414' : '#fff',
-            padding: '0 20px',
+            padding: isMobile ? '0 20px 0 8px' : '0 20px',
             height: 56,
             lineHeight: '56px',
             display: 'flex',
@@ -668,23 +777,46 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
             borderBottom: darkMode ? '1px solid #303030' : 'none',
           }}
         >
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setSidebarExpanded(true)}
+              aria-label="Open menu"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 36,
+                height: 36,
+                margin: '0 4px 0 -4px',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: 8,
+                cursor: 'pointer',
+              }}
+            >
+              <img src={ASSETS.hamburgerIcon} alt="" style={{ width: 22, height: 22 }} />
+            </button>
+          )}
           <img src={ASSETS.asuLogo} alt="ASU" style={{ height: 28, marginRight: 10 }} />
           <Title
             level={4}
             style={{ margin: 0, fontWeight: 700, letterSpacing: '-0.6px', fontSize: 20, lineHeight: '26px' }}
           >
-            {activeProject}
+            {onboardingMode ? 'CreateAI Chat' : activeProject}
           </Title>
-          {activeProject === 'CreateAI Chat' && (
+          {!onboardingMode && activeProject === 'CreateAI Chat' && (
             <img src={ASSETS.goldBadge} alt="" style={{ width: 16, height: 16, marginLeft: 6 }} />
           )}
-          <span
-            onClick={() => setProjectDetailsExpanded((v) => !v)}
-            style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', marginLeft: 4 }}
-            title={projectDetailsExpanded ? 'Hide project details' : 'Show project details'}
-          >
-            <DownOutlined style={{ fontSize: 10, color: '#747474', transform: projectDetailsExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
-          </span>
+          {!onboardingMode && (
+            <span
+              onClick={() => setProjectDetailsExpanded((v) => !v)}
+              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', marginLeft: 4 }}
+              title={projectDetailsExpanded ? 'Hide project details' : 'Show project details'}
+            >
+              <DownOutlined style={{ fontSize: 10, color: '#747474', transform: projectDetailsExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+            </span>
+          )}
           <div style={{ flex: 1 }} />
         </Header>
 
@@ -726,11 +858,34 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                   level={3}
                   style={{ textAlign: 'center', marginBottom: 4, fontWeight: 700, fontSize: 24, lineHeight: '28px', letterSpacing: '-0.035px' }}
                 >
-                  {projectInfo.title}
+                  {onboardingMode ? onboardingWelcome.title : projectInfo.title}
                 </Title>
                 <Text style={{ textAlign: 'center', color: darkMode ? 'rgba(255,255,255,0.65)' : '#484848', fontSize: 16, lineHeight: '24px' }}>
-                  {projectInfo.subtitle}
+                  {onboardingMode ? onboardingWelcome.subtitle : projectInfo.subtitle}
                 </Text>
+                {onboardingMode && (
+                  <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                    {onboardingWelcome.suggestions.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setInputValue(s)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 20,
+                          border: darkMode ? '1px solid #434343' : '1px solid #e8e8e8',
+                          background: darkMode ? '#262626' : '#f5f5f5',
+                          color: darkMode ? 'rgba(255,255,255,0.85)' : '#191919',
+                          fontSize: 14,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                    
+                  </div>
+                )}
                 <div style={{ marginTop: 24, width: '100%' }}>
                   <div
                     style={{
