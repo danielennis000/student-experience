@@ -1,7 +1,7 @@
 export const mockProfile = {
   id: '12345',
   name: 'Alex Rodriguez',
-  email: 'dennis4@asu.edu',
+  email: 'mrodriguez123@asu.edu',
   major: 'Computer Science',
   year: 'Junior',
   interests: ['AI', 'Robotics', 'Entrepreneurship'],
@@ -133,7 +133,7 @@ Let me know if you're interested!`,
 
 export const mockBioEmailDraft = {
   subject: 'Request for Midterm Exam Rescheduling - Medical Appointment',
-  body: `Dear Professor [Last Name],
+  body: `Dear Professor Wilson,
 
 I hope this email finds you well. I am writing to inform you that I have an urgent medical appointment scheduled on March 18th at 10:00 AM, which conflicts with our BIO 181 midterm exam.
 
@@ -144,8 +144,8 @@ I am available to take the exam earlier that week or later that day if that woul
 Thank you for your understanding and consideration. I look forward to hearing from you about possible alternative arrangements.
 
 Best regards,
-Alex Rodriguez
-Student ID: [Your ID]
+Maria Rodriguez
+ASURITE: mrodriguez123
 BIO 181`,
 }
 

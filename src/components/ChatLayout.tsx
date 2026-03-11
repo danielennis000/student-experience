@@ -274,9 +274,12 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   }, [replaceLastMessage])
 
   const handleSendEmail = useCallback(() => {
-    addMessage({ id: nextId(), role: 'thinking', thinkingSteps: ['Sending email to study group...'] })
+    const sendingMessage = phase === 'bioEmailDraft' 
+      ? 'Sending email to professor...' 
+      : 'Sending email to study group...'
+    addMessage({ id: nextId(), role: 'thinking', thinkingSteps: [sendingMessage], source: 'Gmail MCP' })
     setPhase('sendingEmail')
-  }, [addMessage])
+  }, [addMessage, phase])
 
   const handleSendEmailComplete = useCallback(() => {
     replaceLastMessage({ id: nextId(), role: 'assistant', component: 'emailSuccess', streaming: true })
@@ -349,7 +352,7 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
   }, [addMessage])
 
   const handleBioEmailComposeComplete = useCallback(() => {
-    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'email', streaming: true, source: 'Gmail MCP' })
+    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'email', streaming: true, source: 'BIO 181 Chat' })
     setPhase('bioEmailDraft')
   }, [replaceLastMessage])
 
@@ -420,9 +423,9 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
 
   const handleMicClick = () => {
     if (isRecording) return // Prevent clicking while recording
-    
+
     setIsRecording(true)
-    
+
     // Determine the voice query based on phase and project
     let voiceQuery = ''
     if (phase === 'welcome') {
@@ -435,6 +438,8 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
       voiceQuery = 'Oh interesting. Can you draft an email I can send to my study group about the Life in Crisis event at 3:30. I want to see who else might want to attend?'
     } else if (phase === 'bioResponse') {
       voiceQuery = 'I have an urgent medical appointment on the day of the scheduled mid-term. Can you draft an email to send to my professor explaining the situation?'
+    } else if (phase === 'bioEmailDraft') {
+      voiceQuery = 'Can you send this email for me?'
     } else {
       setIsRecording(false)
       return
@@ -486,6 +491,10 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           } else if (phase === 'bioResponse') {
             setTimeout(() => {
               handleBioEmailRequest()
+            }, 400)
+          } else if (phase === 'bioEmailDraft') {
+            setTimeout(() => {
+              handleSendEmail()
             }, 400)
           }
         }, 300)
@@ -889,10 +898,10 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                         {msg.component === 'events' && <EventList darkMode={darkMode} streaming={!!msg.streaming} onStreamComplete={() => markStreamed(msg.id)} />}
                         {msg.component === 'email' && (
                           <EmailDraft 
-                            onSwitchToSlack={phase === 'bioEmailDraft' ? undefined : handleSwitchToSlack} 
-                            onSend={phase === 'bioEmailDraft' ? handleSendEmail : handleSendEmail} 
+                            onSwitchToSlack={activeProject === 'BIO 181 | Chat' ? undefined : handleSwitchToSlack} 
+                            onSend={handleSendEmail} 
                             darkMode={darkMode}
-                            isBioEmail={phase === 'bioEmailDraft'}
+                            isBioEmail={activeProject === 'BIO 181 | Chat'}
                           />
                         )}
                         {msg.component === 'emailSuccess' && (
