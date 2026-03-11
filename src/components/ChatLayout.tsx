@@ -14,6 +14,7 @@ import {
   mockAIProjects,
   mockChatHistory,
   projectDescriptions,
+  mockBioEmailDraft,
   type MockChat,
 } from '../data/mockData'
 import ThinkingState from './ThinkingState'
@@ -38,6 +39,7 @@ interface Message {
   thinkingSteps?: string[]
   component?: MessageComponent
   streaming?: boolean
+  source?: string
 }
 
 type Phase =
@@ -51,6 +53,10 @@ type Phase =
   | 'slackDraft'
   | 'sending'
   | 'done'
+  | 'bioQuerying'
+  | 'bioResponse'
+  | 'bioEmailComposing'
+  | 'bioEmailDraft'
 
 let messageId = 0
 const nextId = () => `msg-${++messageId}`
@@ -310,6 +316,43 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
     setPhase('done')
   }, [replaceLastMessage])
 
+  // --- BIO 181 Chat Flow Handlers ---
+  const handleBioQuerySubmit = useCallback(() => {
+    addMessage({
+      id: nextId(),
+      role: 'thinking',
+      thinkingSteps: ['Checking syllabus...', 'Retrieving exam details...'],
+    })
+    setPhase('bioQuerying')
+  }, [addMessage])
+
+  const handleBioQueryComplete = useCallback(() => {
+    replaceLastMessage({
+      id: nextId(),
+      role: 'assistant',
+      text: "Your **BIO 181 Mid-Term** is on **March 18th at 10:00 AM in LSE 101**.\n\nThe exam covers **Chapters 5–9**: Cell Metabolism, Genetics, and Photosynthesis. You'll want to check the study guide posted on Canvas. Good luck! 📚",
+      streaming: true,
+      source: 'BIO 181 Syllabot',
+    })
+    setPhase('bioResponse')
+  }, [replaceLastMessage])
+
+  const handleBioEmailRequest = useCallback(() => {
+    setTimeout(() => {
+      addMessage({
+        id: nextId(),
+        role: 'thinking',
+        thinkingSteps: ['Crafting professional email...', 'Adding exam details...', 'Formatting message...'],
+      })
+      setPhase('bioEmailComposing')
+    }, 400)
+  }, [addMessage])
+
+  const handleBioEmailComposeComplete = useCallback(() => {
+    replaceLastMessage({ id: nextId(), role: 'assistant', component: 'email', streaming: true, source: 'Gmail MCP' })
+    setPhase('bioEmailDraft')
+  }, [replaceLastMessage])
+
   const getThinkingHandler = useCallback((): (() => void) => {
     switch (phase) {
       case 'searching': return handleSearchComplete
@@ -317,11 +360,13 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
       case 'sendingEmail': return handleSendEmailComplete
       case 'switching': return handleSwitchComplete
       case 'sending': return handleSendComplete
+      case 'bioQuerying': return handleBioQueryComplete
+      case 'bioEmailComposing': return handleBioEmailComposeComplete
       default: return () => {}
     }
-  }, [phase, handleSearchComplete, handleComposeComplete, handleSendEmailComplete, handleSwitchComplete, handleSendComplete])
+  }, [phase, handleSearchComplete, handleComposeComplete, handleSendEmailComplete, handleSwitchComplete, handleSendComplete, handleBioQueryComplete, handleBioEmailComposeComplete])
 
-  const inputDisabled = phase !== 'welcome' && phase !== 'results' && phase !== 'emailDraft'
+  const inputDisabled = phase !== 'welcome' && phase !== 'results' && phase !== 'emailDraft' && phase !== 'bioResponse' && phase !== 'bioEmailDraft'
   const showWelcome = phase === 'welcome' && messages.length === 0
   const projectInfo = projectDescriptions[activeProject] || projectDescriptions['CreateAI Chat']
 
@@ -349,10 +394,27 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
         })
         return
       }
+      
+      // Check if this is BIO 181 Chat and trigger the bio workflow
+      if (activeProject === 'BIO 181 | Chat') {
+        const query = inputValue
+        setInputValue('')
+        addMessage({ id: nextId(), role: 'user', text: query })
+        setTimeout(() => {
+          handleBioQuerySubmit()
+        }, 400)
+        return
+      }
+      
       handleSubmit()
     } else if (phase === 'results' && inputValue.trim()) {
       setInputValue('')
       handleDraftEmail()
+    } else if (phase === 'bioResponse' && inputValue.trim()) {
+      const query = inputValue
+      setInputValue('')
+      addMessage({ id: nextId(), role: 'user', text: query })
+      handleBioEmailRequest()
     }
   }
 
@@ -361,12 +423,18 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
     
     setIsRecording(true)
     
-    // Determine the voice query based on phase
+    // Determine the voice query based on phase and project
     let voiceQuery = ''
     if (phase === 'welcome') {
-      voiceQuery = 'Search the web for events at asu today'
+      if (activeProject === 'BIO 181 | Chat') {
+        voiceQuery = 'When is my Biology mid-term?'
+      } else {
+        voiceQuery = 'Search the web for events at asu today'
+      }
     } else if (phase === 'results') {
       voiceQuery = 'Oh interesting. Can you draft an email I can send to my study group about the Life in Crisis event at 3:30. I want to see who else might want to attend?'
+    } else if (phase === 'bioResponse') {
+      voiceQuery = 'I have an urgent medical appointment on the day of the scheduled mid-term. Can you draft an email to send to my professor explaining the situation?'
     } else {
       setIsRecording(false)
       return
@@ -388,18 +456,24 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
           addMessage({ id: nextId(), role: 'user', text: voiceQuery })
           
           if (phase === 'welcome') {
-            setTimeout(() => {
-              addMessage({
-                id: nextId(),
-                role: 'thinking',
-                thinkingSteps: [
-                  'Searching the web...',
-                  'Analyzing 24 results...',
-                  'Personalizing for your interests...',
-                ],
-              })
-              setPhase('searching')
-            }, 400)
+            if (activeProject === 'BIO 181 | Chat') {
+              setTimeout(() => {
+                handleBioQuerySubmit()
+              }, 400)
+            } else {
+              setTimeout(() => {
+                addMessage({
+                  id: nextId(),
+                  role: 'thinking',
+                  thinkingSteps: [
+                    'Searching the web...',
+                    'Analyzing 24 results...',
+                    'Personalizing for your interests...',
+                  ],
+                })
+                setPhase('searching')
+              }, 400)
+            }
           } else if (phase === 'results') {
             setTimeout(() => {
               addMessage({
@@ -408,6 +482,10 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                 thinkingSteps: ['Crafting email...', 'Adding event details...', 'Formatting message...'],
               })
               setPhase('composing')
+            }, 400)
+          } else if (phase === 'bioResponse') {
+            setTimeout(() => {
+              handleBioEmailRequest()
             }, 400)
           }
         }, 300)
@@ -497,7 +575,6 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                       }}
                       className="sidebar-history-item"
                     >
-                      <img src={ASSETS.asuThumb} alt="" style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 4, objectFit: 'cover' }} />
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', color: darkMode ? 'rgba(255,255,255,0.85)' : undefined }}>{p.name}</span>
                       {activeProject === p.name && !activeProjectId && (
                         <img src={ASSETS.editIcon} alt="" style={{ width: 14, height: 14, flexShrink: 0, opacity: 0.7 }} />
@@ -761,6 +838,28 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
 
                 {msg.role === 'assistant' && (
                   <div style={{ maxWidth: '100%' }}>
+                    {msg.source && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                        <div style={{ 
+                          width: 24, 
+                          height: 24, 
+                          borderRadius: '50%', 
+                          background: darkMode ? '#8C1D40' : '#8C1D40',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: '#fff',
+                          flexShrink: 0
+                        }}>
+                          {msg.source.charAt(0)}
+                        </div>
+                        <Text style={{ fontSize: 13, fontWeight: 500, color: darkMode ? 'rgba(255,255,255,0.85)' : '#191919' }}>
+                          {msg.source}
+                        </Text>
+                      </div>
+                    )}
                     {msg.text && (
                       <Paragraph style={{ fontSize: 15, marginBottom: 8, lineHeight: '24px', whiteSpace: 'pre-wrap' }}>
                         {msg.streaming ? (
@@ -788,12 +887,19 @@ export default function ChatLayout({ darkMode = false, onDarkModeChange, avatar 
                     {(!msg.text || !msg.streaming) && (
                       <div className={msg.streaming && msg.component !== 'events' ? 'stream-fade-in' : undefined}>
                         {msg.component === 'events' && <EventList darkMode={darkMode} streaming={!!msg.streaming} onStreamComplete={() => markStreamed(msg.id)} />}
-                        {msg.component === 'email' && <EmailDraft onSwitchToSlack={handleSwitchToSlack} onSend={handleSendEmail} darkMode={darkMode} />}
+                        {msg.component === 'email' && (
+                          <EmailDraft 
+                            onSwitchToSlack={phase === 'bioEmailDraft' ? undefined : handleSwitchToSlack} 
+                            onSend={phase === 'bioEmailDraft' ? handleSendEmail : handleSendEmail} 
+                            darkMode={darkMode}
+                            isBioEmail={phase === 'bioEmailDraft'}
+                          />
+                        )}
                         {msg.component === 'emailSuccess' && (
                           <Result
                             icon={<CheckCircleFilled className="success-enter" style={{ color: '#52c41a', fontSize: 48 }} />}
                             title="Email sent successfully!"
-                            subTitle="Your message has been sent to your study group."
+                            subTitle={phase === 'bioEmailDraft' || activeProject === 'BIO 181 | Chat' ? "Your message has been sent to your professor." : "Your message has been sent to your study group."}
                             style={{ padding: '24px 0' }}
                           />
                         )}

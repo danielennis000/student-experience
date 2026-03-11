@@ -94,12 +94,12 @@ export const mockChatHistory: MockChat[] = [
 
 export const projectDescriptions: Record<string, { title: string; subtitle: string; info?: string }> = {
   'CreateAI Chat': {
-    title: 'What can I help you with?',
+    title: 'Hi Maria, what can I help you with?',
     subtitle: 'I’m able to answer questions about pretty much anything. Just ask me!',
     info: 'AI Acceleration Team @ ASU',
   },
   'BIO 181 | Chat': {
-    title: 'What can I help you with?',
+    title: 'How can I help you today?',
     subtitle: 'This project answers questions about BIO 181. Just ask me!',
     info: 'name123@asu.edu',
   },
@@ -129,6 +129,24 @@ I just saw that there's an event today called "Life in Crisis: Biopolitics and H
 I'm thinking about going and wanted to see if anyone else from our study group would like to attend together. It could be a good opportunity to hear different perspectives and maybe even use some of it in our upcoming discussions or assignments.
 
 Let me know if you're interested!`,
+}
+
+export const mockBioEmailDraft = {
+  subject: 'Request for Midterm Exam Rescheduling - Medical Appointment',
+  body: `Dear Professor [Last Name],
+
+I hope this email finds you well. I am writing to inform you that I have an urgent medical appointment scheduled on March 18th at 10:00 AM, which conflicts with our BIO 181 midterm exam.
+
+This appointment was scheduled by my healthcare provider and cannot be rescheduled due to the urgency of the matter. I understand the importance of the midterm exam and would greatly appreciate the opportunity to take it at an alternative time.
+
+I am available to take the exam earlier that week or later that day if that would be convenient. I am also happy to provide documentation from my healthcare provider if needed.
+
+Thank you for your understanding and consideration. I look forward to hearing from you about possible alternative arrangements.
+
+Best regards,
+Alex Rodriguez
+Student ID: [Your ID]
+BIO 181`,
 }
 
 export interface MockSource {

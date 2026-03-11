@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Typography, Input, Select } from 'antd'
 import { CheckCircleFilled, SendOutlined } from '@ant-design/icons'
-import { mockEmailDraft } from '../data/mockData'
+import { mockEmailDraft, mockBioEmailDraft } from '../data/mockData'
 
 const { Text, Paragraph } = Typography
 const { TextArea } = Input
@@ -15,21 +15,28 @@ const STUDY_GROUP_MEMBERS = [
   { label: 'Priya Patel', value: 'priya.patel@asu.edu' },
 ]
 
+// Professor recipient for BIO 181
+const PROFESSOR_RECIPIENT = [
+  { label: 'Dr. Wilson (BIO 181)', value: 'jwilson@asu.edu' },
+]
+
 interface EmailDraftProps {
-  onSwitchToSlack: () => void
+  onSwitchToSlack?: () => void
   onSend?: () => void
   darkMode?: boolean
+  isBioEmail?: boolean
 }
 
-export default function EmailDraft({ onSwitchToSlack, onSend, darkMode = false }: EmailDraftProps) {
-  // Auto-suggest 3 members based on biology assignment context
-  const [recipients, setRecipients] = useState<string[]>([
-    'sarah.chen@asu.edu',
-    'marcus.rivera@asu.edu',
-    'emily.park@asu.edu'
-  ])
-  const [subject, setSubject] = useState(mockEmailDraft.subject)
-  const [body, setBody] = useState(mockEmailDraft.body)
+export default function EmailDraft({ onSwitchToSlack, onSend, darkMode = false, isBioEmail = false }: EmailDraftProps) {
+  const emailData = isBioEmail ? mockBioEmailDraft : mockEmailDraft
+  const recipientOptions = isBioEmail ? PROFESSOR_RECIPIENT : STUDY_GROUP_MEMBERS
+  const defaultRecipients = isBioEmail 
+    ? ['jwilson@asu.edu']
+    : ['sarah.chen@asu.edu', 'marcus.rivera@asu.edu', 'emily.park@asu.edu']
+  
+  const [recipients, setRecipients] = useState<string[]>(defaultRecipients)
+  const [subject, setSubject] = useState(emailData.subject)
+  const [body, setBody] = useState(emailData.body)
   const borderColor = darkMode ? '#434343' : '#e8e8e8'
   const textColor = darkMode ? 'rgba(255,255,255,0.85)' : '#191919'
   const mutedColor = darkMode ? 'rgba(255,255,255,0.65)' : '#484848'
@@ -94,7 +101,7 @@ export default function EmailDraft({ onSwitchToSlack, onSend, darkMode = false }
               mode="multiple"
               value={recipients}
               onChange={setRecipients}
-              options={STUDY_GROUP_MEMBERS}
+              options={recipientOptions}
               variant="borderless"
               style={{ flex: 1, fontSize: 15 }}
               placeholder="Add recipients"
@@ -172,14 +179,20 @@ export default function EmailDraft({ onSwitchToSlack, onSend, darkMode = false }
       </div>
 
       <Paragraph style={{ fontSize: 15, lineHeight: '24px', color: mutedColor }}>
-        Feel free to make any changes directly to the draft. When you're ready, I can send it for you. Or you can {' '}
-        <a
-          onClick={onSwitchToSlack}
-          style={{ color: darkMode ? '#FFC627' : '#8C1D40', textDecoration: 'underline', cursor: 'pointer' }}
-        >
-          send it via Slack
-        </a>
-        .
+        {isBioEmail ? (
+          <>Feel free to make any changes directly to the draft. When you're ready, I can send it for you.</>
+        ) : (
+          <>
+            Feel free to make any changes directly to the draft. When you're ready, I can send it for you. Or you can {' '}
+            <a
+              onClick={onSwitchToSlack}
+              style={{ color: darkMode ? '#FFC627' : '#8C1D40', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              send it via Slack
+            </a>
+            .
+          </>
+        )}
       </Paragraph>
     </div>
   )
